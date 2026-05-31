@@ -30,7 +30,9 @@ Items where ALL of the following are true:
   discoverable location (GitHub issue, versioned file, established tracking
   system) — cite the specific location for each item
 
-For each item, state what it is and where it is captured.
+List these **tersely** — one line per item: what it is and where it's
+captured. Don't re-explain or expand; the detail already lives in the
+artifact. This is a confirmation, not a second copy.
 
 ### Not Yet Captured
 
@@ -44,6 +46,21 @@ Items where ANY of the following are true:
 - Partial work was done but the remaining steps are not documented
 
 For each item, state what is missing and why it matters.
+
+### Durable Learnings to Promote
+
+Separate from unsaved *work*, audit for reusable *knowledge* the session
+produced that should inform FUTURE sessions, not just resume this one:
+
+- Rules, conventions, or preferences established (how the user wants X done)
+- Operating facts discovered that will be needed again (identifiers, account
+  roles, recurring timelines, domain mechanics)
+- Methodologies or models worked out that generalize beyond today's instance
+
+These are the most easily lost, precisely because they don't look like
+"undone work" — they feel safe because they're in the conversation. They are
+not, unless promoted to a durable home (see Phase 2 routing). Listing them
+here is not enough; each must get a destination.
 
 ### Suggested session name
 
@@ -130,6 +147,23 @@ decisions, reasoning, and remaining work.
 
 Only when the content is polished, complete, and appropriate for the repo's
 audience — never raw brainstorming or incomplete thoughts.
+
+#### 7. Always-loaded context files and structured config (for durable learnings)
+
+Route the "Durable Learnings to Promote" by HOW they must be found later, not
+just whether they're saved:
+
+- **Must inform every future session** (standing rules, conventions) → the
+  always-loaded agent context file (`CLAUDE.md` / `CONTEXT.md` / domain-scoped
+  context). Keep it lean — a one-line rule or a pointer, never a wall.
+- **Structured reference data** (account maps, identifiers, lookup tables) → a
+  config file (`config/*.yaml`), with a breadcrumb from the context file.
+- **Findable when the topic recurs** (evergreen reference, methodology) → a
+  stable `.md` doc, with a one-line pointer from the context file.
+- **A repeatable procedure** → a skill.
+
+Watch context-file size: prefer a pointer + an external doc over inlining bulk
+into an always-loaded file.
 
 ### Session resume information
 
@@ -235,15 +269,18 @@ that would help the user (or an agent) resume without loss.
 
 ## Phase 5: Re-audit (mandatory loop)
 
-After completing Phase 4, return to Phase 1 and repeat the full audit from
-scratch. Review the entire conversation again, including the capture work just
-performed. Present updated Fully Captured and Not Yet Captured lists.
+After completing Phase 4, re-scan the entire conversation again — including
+the capture work just performed — to catch anything missed.
 
-If anything remains in Not Yet Captured, repeat Phases 2–5.
+**Report only the delta — do NOT reprint the full lists.** State what changed
+since the last pass: items now closed, plus any newly surfaced gaps. For
+example: "Re-audit: 2 items closed, 1 new gap found —" followed by just the
+new gap. Re-dumping the entire Fully Captured / Not Yet Captured lists each
+loop is the main thing that turns this skill's output into an unreadable wall;
+don't do it.
 
-Continue looping until Not Yet Captured is completely empty — every item of
-value from the session is verified as captured. Only then report that the
-session is safe to exit.
+If any gap remains, repeat Phases 2–5 on just those gaps. Continue until
+nothing remains, then report the session is safe to exit.
 
 **Do not skip this loop.** The first pass routinely misses items. Common things
 missed on first pass:
