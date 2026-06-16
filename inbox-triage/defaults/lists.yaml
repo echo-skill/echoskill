@@ -1,0 +1,13 @@
+# Mailing lists to auto-archive when you are NOT on To/Cc and NOT
+# named in the body. See rules.md "social-notifications" / archive
+# categories.
+#
+# Format:
+#   - sender_or_listid: pattern to match in From, Sender, or List-ID
+#     reason: why this is on the auto-archive list (for human review)
+#
+# Add entries as new broadcast senders are encountered during triage.
+# The skill should flag plausible additions during a session and ask
+# before adding.
+
+lists: []

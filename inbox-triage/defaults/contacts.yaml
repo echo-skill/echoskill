@@ -1,0 +1,13 @@
+# Known senders with explicit handling overrides.
+#
+# Use sparingly. Most senders are best handled by rules.md. Add a
+# contact here only when a sender needs treatment that differs from
+# the category rules — e.g., "always important" or "always archive
+# even though it looks like marketing".
+#
+# Format:
+#   - from: email address or display name match
+#     treat_as: important | archive | review | task
+#     reason: short note explaining the override
+
+contacts: []
