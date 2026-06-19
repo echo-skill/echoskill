@@ -213,6 +213,51 @@ No registration or manifest needed beyond the file itself.
 - **Keep it focused.** One skill, one purpose. If it does two unrelated things,
   split it into two skills.
 
+## Per-User Config & State: Where It Lives
+
+When a skill needs per-user configuration or must remember resolved state
+(account ids, which thing is which, user preferences), decide *where* that
+lives deliberately. Present the applicable options to the user when it matters;
+don't reach for a heavy store by default.
+
+**Principles**
+
+- **Prefer discovery over storage.** If a fact is re-derivable from the
+  system-of-record at runtime, derive it instead of storing it. Discover by
+  **structural signals** (types, subtypes, status, recent activity), **not by
+  user-chosen names/labels** — names are themselves user-specific config, so
+  matching on them just relocates the problem. Discovery also **self-heals**
+  when an underlying id changes (e.g. an account recreated on a reconnection
+  keeps its type/name but gets a new id).
+- **Keep the skill generic; put user-specifics behind one "load settings"
+  seam** so the *source* can change without touching skill logic.
+- **Confirm-once-then-persist** for discoveries that are genuinely ambiguous.
+
+**Tiers — cheapest / most portable first:**
+
+1. **Runtime discovery → session memory.** Re-derive each session from the
+   system-of-record. Zero storage, fully portable, self-healing. The default
+   when discovery is cheap and confident.
+2. **Local file (XDG).** `~/.config/<name>.json` (a flat file is spec-compliant;
+   graduate to `~/.config/<name>/` once more than one file is needed). Persists
+   confirmed or expensive-to-derive state, per machine. Prefer **JSON over YAML**
+   when a stdlib-only reader matters — Python reads `json` with no install;
+   `yaml` needs a package (venv).
+3. **Agent permanent memory.** Spans sessions, but is typically **per-surface and
+   local** — it does **not** sync across agent surfaces (e.g. a CLI agent vs a
+   web/mobile app of the same vendor are separate memory stores). It's for
+   learned prose context, not structured config. Use sparingly.
+4. **Centralized cloud** (a per-user file or sheet in the user's own cloud
+   account, located via a stable tag/property). The **only cross-surface**
+   option; heaviest; adds a connector dependency and a tamper surface. Use when
+   cross-device or multi-user truly requires it. A locked/hidden file (e.g. an
+   app-private folder) resists casual tampering better than a user-editable
+   spreadsheet.
+
+**Binding-dependency caveat:** cross-surface config portability is moot unless
+the skill's required tools/connectors actually exist on that surface — the
+connector is the real dependency, not the config store.
+
 ## After Writing: Install, Test, Publish
 
 Skills are fast-to-market by design. The goal is to impact the user's
