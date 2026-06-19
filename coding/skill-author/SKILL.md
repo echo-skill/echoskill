@@ -335,6 +335,25 @@ The `setup-agent-context` skill, if available, covers `.gitignore`
 management for agent directories in detail — including per-file
 guidance on what to version vs. exclude.
 
+#### Installing a `.skill` bundle (Claude desktop / Cowork, macOS)
+
+Some platforms install a skill from a packaged `.skill` bundle rather
+than a filesystem path. On macOS, once you have the `.skill` file,
+hand it to the installer one of two ways — and **offer the user the
+choice**, because they serve different moments:
+
+| Command | What happens | When |
+|---|---|---|
+| `open -R <file>.skill` | Reveals the file **selected** in Finder; user drags it into the install UI | User wants to *see what they're installing and choose deliberately* |
+| `open <file>.skill` | `.skill` is registered to the Claude desktop app, so this (= double-click) launches the **install popup directly** — one click to install/replace | Fast, one-step install |
+
+Both are verified. More generally: whenever you direct a user to a
+local file they must act on (install, upload, attach, drag), run
+`open -R <path>` (reveal it selected) or `open <path>` (hand it to its
+handler) rather than just printing the path — it takes them straight
+there instead of making them hunt. Building the `.skill` bundle itself
+is a separate, platform-specific packaging step (not covered here).
+
 ### 2. Test the skill
 
 **Verify it's discoverable.** Before testing behavior, confirm the
