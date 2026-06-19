@@ -232,17 +232,38 @@ don't reach for a heavy store by default.
 - **Keep the skill generic; put user-specifics behind one "load settings"
   seam** so the *source* can change without touching skill logic.
 - **Confirm-once-then-persist** for discoveries that are genuinely ambiguous.
+- **Config need not be structured — and often shouldn't be.** Before defining a
+  schema, ask whether the per-user facts are really *settings* at all. Public
+  reference data (published rates, limits, tax tables) is not user config — it's
+  domain knowledge the skill carries. Domain mechanics (how often a thing
+  happens, how a value is derived) belong in the skill, not a preferences file.
+  Mutable, re-derivable state (a "last done" date, a current balance) should be
+  read live, never stored stale. Strip those out and a structured config file is
+  frequently left with nothing — or with content that already lives, as prose,
+  in a document the user maintains.
+- **A prose doc the skill locates is a first-class config source.** When the
+  user already keeps the relevant policy as a written document (a project
+  `*.md`, a runbook, a standing-rules file), the right "load settings" seam is
+  to **find that doc and read it**, not to re-encode it as JSON. Locate it by
+  convention (look in the current project), and **if it isn't found, ask the
+  user where it is** (remember for the session; re-discovery is cheap). This
+  keeps the skill generic, avoids a second copy that drifts, and respects that
+  the user's document is the system-of-record.
 
 **Tiers — cheapest / most portable first:**
 
 1. **Runtime discovery → session memory.** Re-derive each session from the
    system-of-record. Zero storage, fully portable, self-healing. The default
    when discovery is cheap and confident.
-2. **Local file (XDG).** `~/.config/<name>.json` (a flat file is spec-compliant;
-   graduate to `~/.config/<name>/` once more than one file is needed). Persists
-   confirmed or expensive-to-derive state, per machine. Prefer **JSON over YAML**
-   when a stdlib-only reader matters — Python reads `json` with no install;
-   `yaml` needs a package (venv).
+2. **Local file.** For machine-local state with no obvious home, `~/.config/<name>.json`
+   (a flat file is spec-compliant; graduate to `~/.config/<name>/` once more than
+   one file is needed). Prefer **JSON over YAML** when a stdlib-only reader
+   matters — Python reads `json` with no install; `yaml` needs a package (venv).
+   But match the *shape* to the data (see principles): if the user already keeps
+   this as a prose document, the file is **that doc, located in-project or
+   asked-for** — not a new structured schema. Resolve by an absolute, well-known
+   path (XDG base dir, or the discovered doc's path); **never a cwd-relative path
+   or a hardcoded workspace root** — both break across sessions and machines.
 3. **Agent permanent memory.** Spans sessions, but is typically **per-surface and
    local** — it does **not** sync across agent surfaces (e.g. a CLI agent vs a
    web/mobile app of the same vendor are separate memory stores). It's for
