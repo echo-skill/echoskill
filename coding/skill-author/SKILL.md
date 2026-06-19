@@ -195,10 +195,14 @@ echomodel skills install skill-author
 ## Installation
 
 Skills are installed via `echomodel skills install` (cross-platform) or
-`gemini skills install` (Gemini native). Claude has no skill CLI — echomodel
-writes directly to `~/.claude/skills/`.
+`gemini skills install` (Gemini native). Standalone Claude Code has no skill
+CLI — `echomodel` writes directly to `~/.claude/skills/`. The **Claude Desktop**
+app is a separate channel: skills install through its Cowork `.skill` flow into
+a managed `anthropic-skills` plugin that the app injects into both its Cowork and
+embedded-Code tabs (see "Detect the surface" under *After Writing* for picking
+the right channel).
 
-Both tools discover skills by scanning directories for `SKILL.md` files.
+Agents discover skills by scanning directories for `SKILL.md` files.
 No registration or manifest needed beyond the file itself.
 
 ## Writing Good Skill Instructions
@@ -428,13 +432,28 @@ After publishing, show the user how to install the skill elsewhere.
 Use actual values from the publish (repo URL, collection, skill name)
 — not angle-bracket placeholders.
 
-**Match existing patterns first.** Before choosing an install method,
-check how other skills from the same marketplace/repo are already
-installed on this machine. Look at `~/.claude/skills/` — are existing
-skills symlinked, copied, or plugin-managed? Check `gemini skills list`
-— are they installed or linked? Follow the established pattern rather
-than introducing a new one. Save the install method to memory if not
-already saved, so future publishes are consistent without re-discovery.
+**Detect the surface before choosing a method — don't just copy whatever
+`~/.claude/skills/` already shows.** The right install path depends on where
+the agent is actually running:
+
+- **Standalone Claude Code (terminal CLI, `CLAUDE_CODE_ENTRYPOINT=cli`):**
+  filesystem only — symlink into `~/.claude/skills/<name>/`, `npx skills add`,
+  or a plugin. This is the only channel here.
+- **Claude Code embedded in the Claude Desktop app (the "Code" tab,
+  `CLAUDE_CODE_ENTRYPOINT=claude-desktop`):** the desktop app injects its own
+  managed skills plugin (named `anthropic-skills`) into this tab, carrying
+  Anthropic built-ins **and** skills the user installed via the desktop app's
+  Cowork `.skill` flow. So a skill installed once through Cowork already appears
+  here — **a `~/.claude/skills` symlink is usually redundant.** The Code tab sees
+  the union of that injected plugin + native `~/.claude/skills`. (The Cowork MCP
+  *tools* are NOT injected, so the `.skill` build/install itself must be run from
+  a Cowork session, not the Code tab.)
+- **Cowork / Claude Desktop app surface:** package a `.skill` bundle and install
+  it via the desktop Save-card flow (a meta-skill like `install-cowork-skill`).
+
+Check `gemini skills list` for the Gemini side. Match an existing pattern only
+within the *same* channel — don't assume the symlinks in `~/.claude/skills`
+are how a Desktop user's skills got there. Save the resolved method to memory.
 
 **Gemini CLI:**
 
@@ -453,10 +472,12 @@ gemini skills link <local-path>/<collection>/<skill-name>
 reflected immediately with no reinstall. Prefer this over `install`
 when working from a local clone of the skills repo.
 
-**Claude Code:**
+**Claude Code (standalone CLI — see surface detection above):**
 
-Claude Code has no skill management CLI. Install by symlinking from
-a local clone of the marketplace repo:
+Standalone Claude Code has no skill management CLI. Install by symlinking from
+a local clone of the marketplace repo (skip this if the user is on Claude
+Desktop and the skill is already installed via the Cowork `.skill` flow — it's
+injected into the Code tab there):
 
 ```bash
 # Clone the skills repo (once per machine)
