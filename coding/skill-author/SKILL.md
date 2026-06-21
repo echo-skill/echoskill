@@ -26,6 +26,23 @@ If the user says they're building for just one platform, evaluate whether the
 skill's purpose is truly platform-specific by nature. Guide them toward portable
 design when feasible.
 
+**Scope of this skill.** This skill is about *portability and placement* — making
+a skill work across agents and putting it in the right home and tier. For the
+craft of building and evaluating a single skill (drafting, test prompts, evals,
+description-trigger tuning, packaging), defer to the agentskills.io spec and,
+where available, Anthropic's `skill-creator` — don't re-derive those basics here;
+assume the model and those resources carry them.
+
+## First — does this already have a home?
+
+Before drafting anything new, check the skills already registered in the session
+(from their names/descriptions, *without* activating them): is one of them the
+right home for this content — or would it be with a subtle rename/restructure to
+absorb the new functionality? Prefer augmenting (and re-versioning) an existing
+skill over creating a near-duplicate, with the user's blessing. This is the
+reuse-value check applied at capture time: don't spawn a new skill where an
+existing one should grow.
+
 ## Skill Format: agentskills.io Standard
 
 Skills use the [agentskills.io](https://agentskills.io/specification) open
@@ -141,29 +158,48 @@ on a platform extension to function (e.g., `context: fork` is essential
 to its operation), note that in `compatibility`.
 
 
-## No Scripts in Skills
+## Scripts in Skills — supported; instruction-only is a portability choice
 
-**Skills are pure instructions.** Do not bundle executable scripts.
+**Skills can bundle and execute scripts.** The Agent Skills standard defines a
+skill as a directory that can carry `scripts/` alongside `SKILL.md`, and agents
+that support it run them. Reference bundled files by their path within the skill's
+own directory — how that directory is resolved at runtime is agent-specific (Claude
+Code exposes a `${CLAUDE_SKILL_DIR}` variable for it; don't assume that exact
+variable exists on every agent — check the target's docs). Bundling a script is
+fully legitimate — it keeps deterministic logic *with* the skill, so it installs
+everywhere the skill does. The decision is **portability**, not permission.
 
-Why:
-- Gemini blocks `run_shell_command` by default. Enabling it is a blanket
-  permission for ALL shell commands, not scoped to the skill. Unacceptable.
-- Claude's `${CLAUDE_SKILL_DIR}` scripting works but has no Gemini equivalent
-  for standalone skills. Portability breaks.
+- **Instruction-only is the most portable.** Gemini's `run_shell_command` requires
+  approval by default, and the allowlist that grants it is global session /
+  Policy-Engine config, not scoped to an individual skill — you *can* restrict it
+  to specific command prefixes (e.g. `run_shell_command(git)`), but that's a
+  user-level setting the skill can't control. The Cowork `.skill` packaging is
+  **stdlib-only** (no venv/pip). So a skill that bundles runnable scripts —
+  especially ones needing dependencies — narrows to Claude Code (or compatible)
+  and can't ship as a stdlib-only Cowork bundle or assume shell access under
+  Gemini's defaults.
+- **Targeting Claude Code (or compatible)? Bundle scripts freely.** If the skill's
+  value is a deterministic, repeatable operation, put it in `scripts/` and call it
+  from `SKILL.md`. Progressive disclosure applies to code as well as reference
+  docs.
 
-### What Skills CAN Do
+Default to instruction-only when one skill must work across *every* agent; bundle
+scripts when determinism matters and the target supports execution.
+
+### Instruction-only patterns (the portable baseline)
 
 - Reference MCP tools by name: "call the `gapp_deploy` tool"
 - Describe commands the agent should run: "run `git status` on each repo"
 - Include hints, examples, or templates for the agent to adapt
 - Trust the agent to formulate execution plans with user approval
 
-### When a Script Is Required
+### When a plugin (beyond a script-bearing skill) is warranted
 
-If a skill absolutely requires deterministic code execution — a specific script
-that must run exactly as written — it is a candidate for a **plugin** (Claude)
-or **extension** (Gemini), not a standalone skill. That's what the packaging
-layer is for: MCP servers, hooks, bundled scripts, and dependency management.
+Bundling a script does NOT require a plugin. Reach for a **plugin** (Claude) or
+**extension** (Gemini) when you need MORE than a script: an MCP server, hooks,
+dependency / venv management, lifecycle, or distribution as a cross-agent unit.
+"This skill needs to run code" is satisfied by a bundled script; the packaging
+layer is for the rest.
 
 ## Marketplace Structure
 
@@ -224,6 +260,29 @@ When a skill needs per-user configuration or must remember resolved state
 lives deliberately. Present the applicable options to the user when it matters;
 don't reach for a heavy store by default.
 
+**Default, don't bind.** State an opinionated skill's approach (a specific
+tool/backend/dependency — "I use Google Drive"; "the Downloads folder, i.e.
+`~/Downloads` on macOS") as a *default*, not a hard binding. Write the
+load-settings seam wide enough that an adopter can substitute the backend with
+low churn — resolved at runtime by discovery or a short dialogue, or supplied in
+their own context file at whatever scope. Structure it for **accreting
+examples**: work one provider concretely and *name* the alternatives even before
+they're fully worked, so an OneDrive / Dropbox / Ubuntu / Windows user isn't shut
+out on day one (the seam says "for others, discover or ask"); add same-depth
+hints for the rest over time without rewriting. This is what makes a Patterned
+skill genuinely promotable. Bound it with the reuse-value check: build
+substitutability only where adopter-substitution is plausible (Patterned/Generic,
+not Bespoke), and keep it *cheap to discover*, not pre-built for every backend —
+over-generalizing every skill into infinite pluggability is its own failure mode.
+
+**Discover or seed (provision, don't just read).** Resolve settings by discovery
+first. When a durable store is genuinely needed and absent, create it at the
+scope matching the skill's install scope — an agent context file
+(`CLAUDE.md`/`GEMINI.md`/`CONTEXT.md`) or an XDG config file — and seed it in
+dialogue with the user, then update it as conventions evolve. Bounded: prefer
+discovery, confirm before writing, match scope to applicability, never
+speculatively over-write.
+
 **Principles**
 
 - **Prefer discovery over storage.** If a fact is re-derivable from the
@@ -283,13 +342,43 @@ don't reach for a heavy store by default.
 the skill's required tools/connectors actually exist on that surface — the
 connector is the real dependency, not the config store.
 
+## Reuse tiers — where a skill belongs
+
+Every skill sits in one of three tiers along two axes — exposure (private ↔
+published) and generality (one-instance ↔ broadly useful):
+
+- **Generic** — published / shareable. **Zero PII, ever.** Lives in a
+  cross-cutting marketplace, or the specific tool's own public repo when it's
+  coupled to that tool. Use when the value is genuinely reusable and has an
+  audience beyond one.
+- **Patterned** — private, opinionated ("here's how I do X; you could too").
+  Identifiers externalized to config (per "Per-User Config & State"). Built as a
+  **promotion candidate**: keep mechanism and identity cleanly separated so it can
+  graduate to Generic — or serve another user — with a light refactor, never a
+  rewrite.
+- **Bespoke** — private, single-instance, welded to one vendor/account. Don't
+  genericize the method (no audience). Still externalize *sensitive* identifiers
+  (account numbers, card last-4s, billing ids) to config; non-sensitive specifics
+  may stay inline.
+
+The test for any fact: *would another person's copy need a different value here?*
+→ it's identity → config, not skill.
+
+**Reuse-value check — defer, don't duplicate.** Before investing to make something
+Generic, or promoting Patterned → Generic, ask whether the reusable value is real
+and *not already owned* by an existing artifact (especially a well-maintained or
+official one). If it's covered, don't duplicate it or water your skill down
+competing — defer to the existing artifact and keep only your genuine delta. (For
+the craft of building and evaluating a single skill, that's the agentskills.io
+spec and Anthropic's `skill-creator`; see "Scope of this skill" — this skill's
+delta is portability and placement.)
+
 ## After Writing: Install, Test, Publish
 
 Skills are fast-to-market by design. The goal is to impact the user's
 workflow quickly — a skill sitting uninstalled helps no one. In most
 cases, install immediately after writing with limited or no interim
-testing. The skill format is low-risk: pure instructions, no
-executables, easy to revise in place.
+testing. The skill format is low-risk and easy to revise in place.
 
 Publishing is equally urgent. If a skill isn't version-controlled in
 a known location and available across the user's working environments,
@@ -433,7 +522,15 @@ Before copying to the target:
 - **No references to specific consuming repos or projects.** Usage
   examples must be generic. If repo-specific references are found,
   rewrite them to be generic before publishing.
-- **No bundled scripts** unless the skill is part of a plugin.
+- **No PII or user-specific identifiers** — account numbers, emails, names,
+  repo/store names, folder ids, property names, real dollar figures. That's
+  *identity*, not mechanism: externalize per "Per-User Config & State" and recall
+  at runtime. If a different user would need a different value, it's leaked config
+  — pull it out before publishing.
+- **Bundled scripts are fine, but note the portability cost** — a skill that
+  bundles executable scripts targets Claude Code (or compatible); for a skill that
+  must work across every agent, keep it instruction-only or move the code to a
+  plugin/package (see "Scripts in Skills").
 - **No hard dependencies on non-ubiquitous tools** without offering
   alternatives.
 
@@ -659,6 +756,16 @@ skills:
   commit workflow, code style rules)
 - Let discovery handle it when the skill is situational (e.g.,
   PDF processing, dependency evaluation)
+
+## Close the flywheel
+
+Once this skill has run in a session, make sure the standing capture behavior is
+in place: if the agent's global context doesn't already instruct it to watch for
+and *propose* capturing reuse opportunities, propose adding that line
+(discover-or-seed, with the user's blessing). That converts one-off capture into
+an ongoing loop — the agent notices opportunities, this skill captures them, and
+capture keeps the watch-behavior alive. Propose, never auto-write; the
+watch-behavior proposes skills, it doesn't silently generate them.
 
 ## Cross-Skill References
 
