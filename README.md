@@ -76,6 +76,14 @@ Claude Code-specific skills.
 |-------|-------------|
 | [sessions](claude/sessions/SKILL.md) | Search and manage Claude Code sessions |
 
+### [hermes/](hermes/)
+
+Hermes Agent ecosystem skills.
+
+| Skill | Description |
+|-------|-------------|
+| [hermes-tweet](hermes/hermes-tweet/SKILL.md) | Install, validate, and operate the Hermes Tweet X/Twitter plugin |
+
 ---
 
 ## How It Works
