@@ -40,6 +40,7 @@ of the bundle — confirm they are connected before relying on them.
 | Connector | Required? | Used for |
 |---|---|---|
 | Google Workspace (Gmail) | **Required** | Reading the inbox, archiving (removing the `INBOX` label), reading individual emails. Without it the skill cannot run. |
+| Google Drive (`drive_search`, `drive_list_folder`, `drive_update`, `drive_set_properties`) | **Required unless the data root is local** | Locating and read/writing the data root — see "Locating your data". This is what makes the skill work on mobile and web, where there is no filesystem. If Drive is unavailable, the skill can still run against a local data root on a shell surface. |
 | A task manager MCP with `create_task` / `update_task` | Optional | The `track-as-task` outcome. If absent, surface the item to the user as "make a task" instead of creating one. |
 | A banking/finance MCP with `list_accounts` / `list_transactions` | Optional | The Financial-sweep safety checks (verify a balance is positive / autopay ran before archiving an alert). If absent, treat those alerts conservatively as `review` rather than auto-archiving. |
 
@@ -63,36 +64,86 @@ Holds the files the skill reads and writes every run:
 
 | File | Role |
 |---|---|
-| `rules.md` | The triage ruleset, organized by category. **Authoritative.** |
+| `rules.md` | The triage ruleset, organized by category. **Authoritative for what to do.** |
 | `lists.yaml` | Mailing-list senders to auto-archive when the user is not on To/Cc and not named in the body. |
 | `contacts.yaml` | Known senders with explicit handling overrides. |
-| `decisions.md` | Append-only log of one-off "going forward" rulings. Append here when the user makes such a judgment. |
+| `decisions.md` | Dated rulings: the call, the user's own words, the why, and a pointer to where it's codified. **Never restate full policy text here** (that lives in `rules.md`) and **never put session records here** (those go in the log). |
 | `email-triage-log.md` | Chronological session log, **newest entries at the top**. PREPEND an entry after each run. Create if missing. |
+| `gmail-filters.md` | Docs for the static Gmail filters + their backup/rollback procedure. Optional. |
+| `gmail-filters-[account].xml` | Importable `mailFilters.xml` backup, one per Gmail account. Optional. |
+
+Each file has exactly one job. If you find yourself writing the same
+thing into two files, stop — pick the one that owns it.
+
+#### THE DATA ROOT IS A GOOGLE DRIVE FOLDER — prefer it over any local path
+
+The data root must be reachable from **every** surface the user might
+run this skill from: desktop, web, and mobile. A filesystem path is not
+— a phone has no shell, no clone, and no `$HOME`. Google Drive is keyed
+to the user's Google identity, which is the same identity the Gmail
+connector already authenticates as, so it follows the user everywhere.
 
 Resolve `$INBOX_DATA` in this order, stopping at the first that works:
 
-1. The `INBOX_TRIAGE_HOME` environment variable, if set.
-2. A pointer file at `${XDG_CONFIG_HOME:-$HOME/.config}/inbox-triage/config.yaml`
+1. **Google Drive, discovered by property (PREFERRED — try this first,
+   on every surface).** Search Drive for the folder tagged with the
+   single custom property `echoskill-data = inbox-triage`:
+
+   ```
+   drive_search: properties has { key='echoskill-data' and value='inbox-triage' }
+                 and mimeType = 'application/vnd.google-apps.folder'
+                 and trashed = false
+   ```
+
+   Take the folder id, `drive_list_folder` it, and read the files above
+   by their predictable names. Nothing is hardcoded — not the folder's
+   name, not its path, not a file id — so the user may rename or move
+   the folder anywhere in Drive and discovery still resolves.
+
+   Writes go back to the same files (`drive_update`, or delete+recreate
+   if no in-place update is available). Drive's revision history is the
+   version store; pin milestones with `keep_revision_forever`.
+
+2. The `INBOX_TRIAGE_HOME` environment variable, if set (local override,
+   shell surfaces only).
+3. A pointer file at `${XDG_CONFIG_HOME:-$HOME/.config}/inbox-triage/config.yaml`
    with a `data_dir:` key. Read it and use that path.
-3. **In-repo auto-detect:** if the current working directory (or an
+4. **In-repo auto-detect:** if the current working directory (or an
    ancestor) contains `inbox/rules.md`, use that `inbox/` directory.
-   This lets the skill work in place when run inside a project that
-   already keeps its triage rules under an `inbox/` directory.
-4. **Ask the user:** "Where do your inbox-triage rules live?" Offer
-   two paths: (a) point me at an existing folder/project, or (b) let
-   me scaffold a fresh data root.
-   - If they point at a folder, persist it to the pointer file in
-     step 2 so this never has to be asked again.
-   - If they have none, scaffold: create
-     `${XDG_CONFIG_HOME:-$HOME/.config}/inbox-triage/`, copy this
-     skill's `defaults/` seed files into it, write the pointer file,
-     and tell the user plainly: "I created a fresh, generic ruleset
-     here. Your real tuned rules from another machine are NOT here —
-     restore or sync them if you have them."
+5. **Ask the user:** "Where do your inbox-triage rules live?" Offer:
+   (a) point me at an existing Drive folder — then **tag it** with
+   `echoskill-data = inbox-triage` (`drive_set_properties`) so this is
+   never asked again; (b) point me at a local folder; or (c) let me
+   scaffold a fresh data root.
+   - If scaffolding, **create the Drive folder and tag it**, seed it
+     from this skill's `defaults/`, and tell the user plainly: "I
+     created a fresh, generic ruleset. Your real tuned rules from
+     another machine are NOT here — restore or sync them if you have
+     them."
+
+**If rungs 2–4 resolve but rung 1 did not, say so.** A local-only data
+root means the user's rules do not exist on their phone. Offer to
+promote it to Drive and tag it.
 
 Never silently invent rules. If you cannot resolve `$INBOX_DATA` and
 the user declines to scaffold, stop and explain — do not triage
-against guessed rules.
+against guessed rules. **Never scaffold generic defaults over the top
+of a data root you merely failed to find** — an empty ruleset that
+looks like a working one is worse than stopping.
+
+#### Why one property on the folder, not tags on each file
+
+Drive's query language has no "key exists" operator — `properties has`
+requires both key and value — so one property whose value is constant
+across everything the skill owns is what makes a single "find all my
+stuff" query possible. Per-file tags for role/format/account are
+redundant: role duplicates the filename, format is documentation not a
+selector, and account is not an axis at all (the Drive owner *is* the
+account). Tag the container once; name the files predictably.
+
+The key is `echoskill-data`, not a vendor-specific name — this is plain
+markdown any agent could execute, and `echoskill` is a namespace the
+user controls. Other skills reuse the same key with a different value.
 
 ### Project root — `$PROJECT_ROOT` (optional, cross-cutting)
 
