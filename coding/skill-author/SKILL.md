@@ -443,6 +443,17 @@ handler) rather than just printing the path — it takes them straight
 there instead of making them hunt. Building the `.skill` bundle itself
 is a separate, platform-specific packaging step (not covered here).
 
+**Updating a skill that's already injected via `anthropic-skills`.**
+Re-installing an edited `.skill` this way **overwrites the managed copy
+in place** — including the copy a currently-running Code-tab session
+loads from — so the update takes effect without waiting for a new
+session, and leaves a **single** copy on disk (no stale duplicate).
+Prefer this over dropping a `~/.claude/skills/<name>` symlink *beside*
+an injected skill of the same name, which creates two same-named skills
+and ambiguity about which one loads. To confirm an install landed:
+locate the installed `SKILL.md` under the app's managed skills directory
+and `grep` it for a string unique to your edit (and check its mtime).
+
 ### 2. Test the skill
 
 **Verify it's discoverable.** Before testing behavior, confirm the
@@ -561,9 +572,12 @@ the agent is actually running:
   Anthropic built-ins **and** skills the user installed via the desktop app's
   Cowork `.skill` flow. So a skill installed once through Cowork already appears
   here — **a `~/.claude/skills` symlink is usually redundant.** The Code tab sees
-  the union of that injected plugin + native `~/.claude/skills`. (The Cowork MCP
-  *tools* are NOT injected, so the `.skill` build/install itself must be run from
-  a Cowork session, not the Code tab.)
+  the union of that injected plugin + native `~/.claude/skills`. **You do NOT need
+  a Cowork session to install or update from the Code tab** (verified): the
+  `.skill` build is a plain stdlib zip, and `open <file>.skill` triggers the
+  desktop install popup directly (see "Installing a `.skill` bundle" above). Only
+  the Cowork *Save-card* (`present_files`) itself needs a Cowork session — the
+  build and the `open`-based install do not.
 - **Cowork / Claude Desktop app surface:** package a `.skill` bundle and install
   it via the desktop Save-card flow (a meta-skill like `install-cowork-skill`).
 
