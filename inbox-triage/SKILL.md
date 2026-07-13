@@ -75,6 +75,15 @@ Holds the files the skill reads and writes every run:
 Each file has exactly one job. If you find yourself writing the same
 thing into two files, stop — pick the one that owns it.
 
+**Do NOT refactor the user's `rules.md`.** It will mix reusable triage
+doctrine with hyper-specific personal detail — their vendors, their
+household, their accounts, named people — and that is fine. It is theirs.
+Splitting it into a "generic" half and a "personal" half is a tempting,
+plausible-sounding idea that the user has already considered and
+rejected: the two are interleaved at the sentence level, the split buys
+them nothing, and the churn risks losing rules. Add to it, refine it,
+reorganize a section when asked — but do not propose carving it up.
+
 #### THE DATA ROOT IS A GOOGLE DRIVE FOLDER — prefer it over any local path
 
 The data root must be reachable from **every** surface the user might
@@ -100,9 +109,37 @@ Resolve `$INBOX_DATA` in this order, stopping at the first that works:
    name, not its path, not a file id — so the user may rename or move
    the folder anywhere in Drive and discovery still resolves.
 
-   Writes go back to the same files (`drive_update`, or delete+recreate
-   if no in-place update is available). Drive's revision history is the
-   version store; pin milestones with `keep_revision_forever`.
+   **WRITING BACK — read this before you save anything.** Update the
+   EXISTING file in place, by its file id (`drive_update`). Revisions
+   stack on that id, and that revision history IS the version store —
+   it is what replaces git for these files.
+
+   **NEVER delete-and-recreate a file to "update" it.** Creating a new
+   file with the same name produces a NEW file id with ONE revision, and
+   silently discards every prior version (the old file lands in Trash and
+   is gone in ~30 days). Do this a few times and the version store the
+   whole design rests on quietly does not exist. If the only create tool
+   available is more convenient than the update tool, that is not a
+   reason — use the update tool.
+
+   Pin milestones with `keep_revision_forever`. Snapshot BEFORE a risky
+   change as well as after, so there is a clean pre-change revision to
+   roll back to (`drive_list_revisions` / `drive_get_revision`).
+
+   **Known tooling gap — do not paper over it.** Some Drive MCPs expose
+   an update tool that accepts ONLY base64, while the create tool accepts
+   plain text. An agent cannot practically base64 a large text file (it
+   would have to round-trip the whole thing through its own context), so
+   the path of least resistance becomes create+delete — which is exactly
+   what destroys the history. Some sandboxes also block Drive's
+   resumable-upload URL, forcing bytes inline and making large writes
+   expensive.
+
+   If in-place update is genuinely unavailable for a large file: **say so
+   to the user before writing**, and treat the lost history as a real
+   cost, not a footnote. Do not silently trade the version store for
+   convenience. The durable fix is an update tool that accepts plain text
+   (worth filing against the Drive MCP).
 
 2. The `INBOX_TRIAGE_HOME` environment variable, if set (local override,
    shell surfaces only).
