@@ -213,7 +213,61 @@ read a file only when a candidate email's metadata points to it.
 - **Optional batch size or filter** — e.g., "just the marketing
   ones," "last 50 emails," "everything from this week."
 
+## Modes — pick one at the start of every run
+
+Two modes. They run the SAME classification against the SAME `rules.md`;
+they differ only in what the run optimizes for and what it puts in front
+of the user. Decide the mode before fetching, and say which one is
+active. When the user doesn't specify, **default to Sweep** — it's what
+they want most of the time.
+
+### Sweep mode (DEFAULT) — "clear the noise, leave me a short list"
+
+The goal is to remove everything that would auto-archive so the user is
+left with the smallest possible set to look at themselves. Optimize for
+volume cleared, not for analysis.
+
+- Run the label-driven mass-archive sweeps (step 2b) FIRST and make them
+  the main event.
+- Classify the remaining inbox; **archive everything that hits an archive
+  rule cleanly**, in as few batched confirmations as possible (one
+  confirmation per bucket, not per email).
+- Do the minimum safety-net checking required to archive responsibly —
+  the universal safety net still applies, and track-as-task triggers
+  still get pulled out — but do NOT do deep, per-item investigation of
+  borderline review items. Anything that doesn't clearly archive is left
+  in the inbox for the user, listed tersely at the end.
+- **End state:** "Archived N. Left M in your inbox: <one terse line
+  each>." The user reviews M on their own. Keep M small and don't
+  editorialize each item.
+
+### Attention mode — "find what needs me right now"
+
+The goal is to surface the few things that most need the user's immediate
+attention, in priority order. Optimize for not missing anything urgent.
+
+- Do NOT lead with bulk archiving. Archiving is secondary here.
+- Scan the whole in-scope inbox for the highest-stakes items: universal
+  safety-net hits (security, new-account, payment failed, past-due /
+  shutoff / penalty), track-as-task triggers, escalating bills, active
+  claims/legal, anything time-critical.
+- Do the deep verification Sweep skips — check the finance MCP, prior
+  invoices, whether an obligation is still live (per the stale-review
+  heuristic in `rules.md`).
+- **End state:** a short ranked list, most-urgent first, each with the
+  one fact that makes it urgent and the suggested action. Offer to run a
+  Sweep afterward to clear the rest.
+
+Either mode may be scoped ("Sweep just the rental account", "Attention
+mode on the primary account only").
+
 ## Workflow
+
+The steps below are written mode-aware: in **Sweep** the weight is on
+2b + archive-classification and the presentation is a terse residual
+list; in **Attention** the weight is on the safety-net / urgency scan
+in step 3 and the presentation is a ranked urgent list. Same rules,
+same tools, different emphasis and output.
 
 ### 1. Locate data, then load context
 
@@ -349,6 +403,14 @@ plan handles today's mess; flagging unsubscribe candidates stops next
 week's.
 
 ### 4. Group and present
+
+**Sweep mode:** lead with the archive plan (one batch confirmation per
+bucket), and present the residual "left for you" set as a short terse
+list — the whole point is a small M. Keep commentary minimal.
+
+**Attention mode:** lead with a ranked most-urgent-first list (each item:
+age, the one fact that makes it urgent, suggested action). The archive
+plan is secondary — mention the count and offer to Sweep afterward.
 
 Present the archive plan grouped by rule, compact table per profile:
 
