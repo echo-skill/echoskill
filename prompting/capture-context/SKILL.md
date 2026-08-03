@@ -64,6 +64,13 @@ here is not enough; each must get a destination.
 
 ### Suggested session name
 
+**Skip this section entirely when the session runs inside a desktop app that
+names sessions automatically and makes renaming easy** — for example the
+Claude Desktop app, in both its embedded Code tab (detectable via
+`CLAUDE_CODE_ENTRYPOINT=claude-desktop`) and its Chat/Cowork surfaces.
+Proposing a rename there is noise. This suggestion exists for terminal CLI
+sessions, which get no automatic name and are otherwise hard to find later.
+
 After presenting both lists, suggest a short, descriptive name for this session
 (e.g., "capture-context-skill-creation", "auth-middleware-refactor"). This
 helps the user label or rename the session for future reference before exiting.
