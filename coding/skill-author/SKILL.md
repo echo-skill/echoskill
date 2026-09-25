@@ -343,12 +343,14 @@ speculatively over-write.
 ## Data-Backed Skills
 
 When a skill's purpose is to capture and maintain user data across sessions
-(a log, inventory, register, tracker), its data lives in centralized cloud
+(a log, inventory, tracker, body of research, or piece of writing), its data
+lives in centralized cloud
 files (tier 4 above) and the skill itself takes on an explicit durability
 responsibility: nothing of value may be lost if a session ends, an agent's
 memory is wiped, or the user changes agent vendors. Read
 [references/data-backed-skills.md](references/data-backed-skills.md) before
-authoring or revising one — it covers the discovery convention, provisioning,
+authoring or revising one — it covers choosing each file's format, the
+discovery convention, provisioning,
 in-place writes, capture obligations every such skill must embed, promoting
 refinements into the skill as they happen, the close-out audit, and a child
 skill skeleton.

@@ -1,7 +1,8 @@
 # Data-Backed Skills
 
 A **data-backed skill** exists to capture and maintain a body of user data
-across sessions — a log, an inventory, a register, a tracker — that the user
+across sessions — a log, an inventory, a tracker, a body of research, a
+piece of writing in progress — that the user
 will revisit, revise, and extend over time. The skill is the *process*; one or
 more cloud files are the *data*.
 
@@ -28,6 +29,33 @@ Propose a data-backed skill when a session starts producing records the user
 will want to revisit: they're logging things, correcting earlier entries,
 attaching sources, or saying "keep track of this." Propose; don't silently
 generate. Check first whether an existing skill should own the data instead.
+
+## Choosing a file format
+
+Choose each file's format by the shape of its data, not by habit. A skill may
+own files of different formats; give each its own `skill-data-role`.
+
+| Data shape | Format | Examples |
+|---|---|---|
+| **Tabular** — many records with the same fields, growing over time | Spreadsheet (Google Sheets) | a daily log kept for years, an inventory, a register |
+| **Structured but not tabular**, and small enough to read and rewrite whole on every change | JSON file | a config-only file, preferences, a small set of nested settings |
+| **Mostly prose** — the value is in the writing itself | Document (Google Docs) | research collected and extended over time, an essay or book draft |
+
+- **Spreadsheets** suit data that grows by adding records. Adding a row doesn't
+  mean rewriting the whole file, and the user can filter, sort, and edit rows
+  in a familiar interface.
+- **JSON** suits nested or key/value data that stays small. Reading and
+  rewriting the whole file on each change is fine at config size. It's the
+  wrong choice for anything that grows without limit: a log kept for years
+  belongs in a spreadsheet. Updating the same file keeps its revision history.
+- **Documents** suit prose. Don't force records into paragraphs or narrative
+  into cells. Edit documents section by section (insert or replace) rather
+  than regenerating them, so the user's own edits survive.
+- **Mixed data gets split by shape.** A research skill might keep its
+  write-up in a document and its list of sources in a spreadsheet, each tagged
+  with its own role.
+- If the shape is unclear, ask the user. Switching formats later means
+  migrating the data.
 
 ## Discovery convention
 
@@ -71,13 +99,17 @@ metadata:
 
 ### Tabs and sections inside a file
 
-Prefer **one file with multiple tabs** over several files when the data shares
-an audience and sharing settings — one discovery point, fewer moving parts.
-Split into separate files only for different sharing, formats, or sizes.
+Within one format, prefer **one file with several sections** over several
+files when the data has the same audience and sharing settings. That means one
+place to look and fewer moving parts. Sections are spreadsheet tabs,
+document tabs or headings, or top-level keys in a JSON file. Use separate files
+when sharing settings, formats, or sizes differ.
 
-Locate tabs by title until the tooling supports in-file metadata (e.g. Sheets
-developer metadata tagged `skill-data-role=<tab-role>`); record in the skill
-which lookup it currently uses.
+Find tabs and headings by title until the tooling supports metadata inside the
+file (e.g. Sheets developer metadata tagged `skill-data-role=<tab-role>`).
+Record in the skill which lookup method it currently uses. Users can rename
+tabs and headings, so if a title lookup fails, ask rather than create a new
+section.
 
 ## Provisioning — find, then ask, then create
 
@@ -86,8 +118,9 @@ which lookup it currently uses.
 3. No match → **stop and ask**: point me at an existing file (then tag it), or
    create a fresh one. **Never scaffold over data you merely failed to find** —
    an empty store that looks like the real one is worse than stopping.
-4. When creating: build the file, write headers exactly as the skill's schema
-   defines them, tag it, and tell the user where it landed.
+4. When creating: build the file in the format the skill specifies, write its
+   initial structure exactly as the skill defines it (column headers, JSON
+   skeleton, or document headings), tag it, and tell the user where it landed.
 
 ## Writing
 
@@ -100,7 +133,7 @@ which lookup it currently uses.
 
 1. **Capture continuously**, as facts arrive — not only at session end.
 2. **Lose no detail** of anything the user provides: keep their text verbatim
-   (in a notes field if it doesn't map to columns), with its source and
+   (in a notes column or field if it doesn't fit the structure), with its source and
    timestamps. Paraphrase is loss.
 3. **Label agent-generated content** — suggestions, observations, inferences —
    as the agent's, with a date, so it's never mistaken for the user's facts.
@@ -119,7 +152,8 @@ When the user sets a rule, preference, or correction, write it down *now*:
 - **Generic process** (how records are structured, how notes are kept) → the
   skill's `SKILL.md`, then version it.
 - **Personal specifics** (their preferences, names, places, identifiers) → the
-  data store (a `Config` tab, or a `skill-data-role=config` file).
+  data store (a `skill-data-role=config` file, often a small JSON file, or a
+  `Config` tab in an existing spreadsheet).
 
 A rule the user had to state twice is evidence one of these writes was missed.
 
@@ -159,7 +193,8 @@ records; this skill holds all process. Chat and agent memory are not storage.
 <property query; fallback: ask, then tag; never scaffold over unfound data>
 
 ## Structure
-<files/tabs, columns, what each means, how dates work>
+<each file: format and why, role, sections (tabs, headings, or keys),
+columns or fields and what each means, how dates work>
 
 ## Conventions
 <capture obligations above, plus domain-specific rules>
