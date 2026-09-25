@@ -332,11 +332,26 @@ speculatively over-write.
    web/mobile app of the same vendor are separate memory stores). It's for
    learned prose context, not structured config. Use sparingly.
 4. **Centralized cloud** (a per-user file or sheet in the user's own cloud
-   account, located via a stable tag/property). The **only cross-surface**
-   option; heaviest; adds a connector dependency and a tamper surface. Use when
-   cross-device or multi-user truly requires it. A locked/hidden file (e.g. an
-   app-private folder) resists casual tampering better than a user-editable
-   spreadsheet.
+   account, located via a public file property — `skill-data=<skill-name>`,
+   plus `skill-data-role=<role>` when the skill owns 2+ files). The **only
+   cross-surface** option; heaviest; adds a connector dependency and a tamper
+   surface. Use when cross-device or multi-user truly requires it. A
+   locked/hidden file (e.g. an app-private folder) resists casual tampering
+   better than a user-editable spreadsheet — but app-private properties are
+   invisible to other agents and clients, so don't use them for discovery.
+
+## Data-Backed Skills
+
+When a skill's purpose is to capture and maintain user data across sessions
+(a log, inventory, register, tracker), its data lives in centralized cloud
+files (tier 4 above) and the skill itself takes on an explicit durability
+responsibility: nothing of value may be lost if a session ends, an agent's
+memory is wiped, or the user changes agent vendors. Read
+[references/data-backed-skills.md](references/data-backed-skills.md) before
+authoring or revising one — it covers the discovery convention, provisioning,
+in-place writes, capture obligations every such skill must embed, promoting
+refinements into the skill as they happen, the close-out audit, and a child
+skill skeleton.
 
 **Binding-dependency caveat:** cross-surface config portability is moot unless
 the skill's required tools/connectors actually exist on that surface — the
@@ -503,6 +518,29 @@ Once the skill works locally, publish it. Skills that stay local get
 forgotten — publish promptly so the skill is available where you (and
 others) will actually use it. If the user hasn't specified a
 destination, ask where it should go and push for a decision now.
+
+#### Choose where the skill is versioned — always ask
+
+Every skill must end up version-controlled somewhere durable; an installed-only
+copy is a single point of failure. **Ask the user which repo it belongs in** —
+don't assume the public marketplace. Decide by reuse tier (see "Reuse tiers"):
+
+- **Generic** → a public marketplace (e.g. echoskill), only after the "Validate
+  before publishing" checks pass.
+- **Patterned / Bespoke** → a **private** git repo of the user's skills, or the
+  user's **dotfiles** if that's how they version machine config (chezmoi, yadm,
+  GNU Stow, or a bare-repo dotfiles setup — ask which they use). Private does
+  not mean unversioned.
+- Unsure whether content is safe to publish → treat it as private. Moving a
+  skill from private to public later is easy; retracting a public leak is not.
+
+Data-backed skills (see "Data-Backed Skills") are usually Patterned or Bespoke:
+the generic process may be publishable, but personal specifics belong in the
+data store, not the skill. When a skill mixes both, split it: generic mechanism
+in the skill, identity in the data store.
+
+Save the chosen destination (per "Reconcile local installs with skills repo")
+so later sessions don't re-ask.
 
 #### Where to publish
 
