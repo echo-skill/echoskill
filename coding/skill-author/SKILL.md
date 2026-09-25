@@ -173,10 +173,10 @@ everywhere the skill does. The decision is **portability**, not permission.
   approval by default, and the allowlist that grants it is global session /
   Policy-Engine config, not scoped to an individual skill — you *can* restrict it
   to specific command prefixes (e.g. `run_shell_command(git)`), but that's a
-  user-level setting the skill can't control. The Cowork `.skill` packaging is
-  **stdlib-only** (no venv/pip). So a skill that bundles runnable scripts —
+  user-level setting the skill can't control. The Claude app's `.skill` packaging
+  is **stdlib-only** (no venv/pip). So a skill that bundles runnable scripts —
   especially ones needing dependencies — narrows to Claude Code (or compatible)
-  and can't ship as a stdlib-only Cowork bundle or assume shell access under
+  and can't ship as a stdlib-only `.skill` bundle or assume shell access under
   Gemini's defaults.
 - **Targeting Claude Code (or compatible)? Bundle scripts freely.** If the skill's
   value is a deterministic, repeatable operation, put it in `scripts/` and call it
@@ -232,11 +232,13 @@ echomodel skills install skill-author
 
 Skills are installed via `echomodel skills install` (cross-platform) or
 `gemini skills install` (Gemini native). Standalone Claude Code has no skill
-CLI — `echomodel` writes directly to `~/.claude/skills/`. The **Claude Desktop**
-app is a separate channel: skills install through its Cowork `.skill` flow into
-a managed `anthropic-skills` plugin that the app injects into both its Cowork and
-embedded-Code tabs (see "Detect the surface" under *After Writing* for picking
-the right channel).
+CLI — `echomodel` writes directly to `~/.claude/skills/`. The **Claude app**
+(web, desktop, mobile) is a separate channel: skills saved there are stored on
+the user's account, and the desktop app caches them into a managed
+`anthropic-skills` plugin that its Code tab loads (see "Detect the surface" under
+*After Writing* for picking the right channel). Chat and Cowork were merged into
+one Claude conversation in September 2026, so anything older that says "Cowork"
+now means an ordinary Claude conversation.
 
 Agents discover skills by scanning directories for `SKILL.md` files.
 No registration or manifest needed beyond the file itself.
@@ -441,7 +443,7 @@ The `setup-agent-context` skill, if available, covers `.gitignore`
 management for agent directories in detail — including per-file
 guidance on what to version vs. exclude.
 
-#### Installing a `.skill` bundle (Claude desktop / Cowork, macOS)
+#### Installing a `.skill` bundle (Claude desktop app, macOS)
 
 Some platforms install a skill from a packaged `.skill` bundle rather
 than a filesystem path. On macOS, once you have the `.skill` file,
@@ -457,8 +459,8 @@ Both are verified. More generally: whenever you direct a user to a
 local file they must act on (install, upload, attach, drag), run
 `open -R <path>` (reveal it selected) or `open <path>` (hand it to its
 handler) rather than just printing the path — it takes them straight
-there instead of making them hunt. Building the `.skill` bundle itself
-is a separate, platform-specific packaging step (not covered here).
+there instead of making them hunt. To build the bundle, see "Building a
+`.skill` bundle" below.
 
 **Updating a skill that's already injected via `anthropic-skills`.**
 Re-installing an edited `.skill` this way **overwrites the managed copy
@@ -470,6 +472,62 @@ an injected skill of the same name, which creates two same-named skills
 and ambiguity about which one loads. To confirm an install landed:
 locate the installed `SKILL.md` under the app's managed skills directory
 and `grep` it for a string unique to your edit (and check its mtime).
+
+#### Building a `.skill` bundle
+
+A `.skill` bundle is a zip of the skill directory with `SKILL.md` at the root of
+the zip (not inside a parent folder).
+
+- **Build from committed code** when the skill lives in a repo: commit first,
+  then build, so what gets installed always matches version control. (In a
+  Claude app conversation with no repo, see the next section.)
+- **Include only what the skill needs:** `SKILL.md` plus any `references/`,
+  `scripts/`, and `assets/` it uses.
+- **Exclude:** `.git/`, virtualenvs (`venv/`, `.venv/`), `node_modules/`,
+  caches (`__pycache__/`, `*.pyc`), editor and OS clutter (`*.swp`,
+  `.DS_Store`), and above all **secrets and personal data** — `.env` files,
+  credentials, tokens, local config, or user data files. `.git/` matters for
+  the same reason: it carries the full history, including anything once
+  committed and later removed.
+- **Check before handing it over:** the frontmatter `description` is at most
+  1024 characters with no tag-like `<...>` text (the Claude app rejects
+  either), and any bundled scripts use the standard library only (see
+  "Scripts in Skills").
+- List the zip's contents before presenting it, and confirm nothing unexpected
+  is inside.
+
+#### Installing from a Claude app conversation (install first, then version)
+
+When the agent is running in a Claude app conversation (web, desktop, or
+mobile) — it can present files to the user but can't push to their repos —
+don't hand the user a prompt for another agent to write the skill. Write it
+here and install it here:
+
+1. **Write or edit the skill** in the conversation's working area. For an edit,
+   start from the currently installed copy, not from memory.
+2. **Package it.** A single-file skill can be presented as its `SKILL.md`; a
+   skill with `references/`, `scripts/`, or `assets/` needs a `.skill` bundle —
+   build it per "Building a `.skill` bundle" above.
+3. **Present it as a file card** so the user can save it to their account or
+   download it. Say what changed.
+4. **Verify on the next turn** that the installed copy matches what was
+   presented. The Claude app may rewrite frontmatter when it saves a skill
+   (e.g. wrapping `name:` in quotes), so a raw checksum of the installed
+   `SKILL.md` can differ from what you presented. Normalize frontmatter
+   quoting before comparing. If the content still differs, say so.
+5. **Prompt the user to absorb the source into a repo of their choice** (see
+   "Choose where the skill is versioned"). An account-only install is a single
+   point of failure with no history. Offer a short prompt for a local agent
+   (e.g. Claude Code) that copies the installed skill into the repo, verifies
+   the checksums, runs "Validate before publishing" when the repo is public,
+   and opens a PR. Any fingerprints in that prompt refer to the version as
+   authored, so the local agent must normalize the installed copy's
+   frontmatter quoting before comparing, and commit the version as authored
+   (e.g. `name: my-skill`, unquoted), not the app's rewritten form.
+
+This reverses the usual order (repo first, then install), but ends in the same
+state: installed copy and repo identical apart from the app's frontmatter
+formatting.
 
 ### 2. Test the skill
 
@@ -609,17 +667,15 @@ the agent is actually running:
 - **Claude Code embedded in the Claude Desktop app (the "Code" tab,
   `CLAUDE_CODE_ENTRYPOINT=claude-desktop`):** the desktop app injects its own
   managed skills plugin (named `anthropic-skills`) into this tab, carrying
-  Anthropic built-ins **and** skills the user installed via the desktop app's
-  Cowork `.skill` flow. So a skill installed once through Cowork already appears
-  here — **a `~/.claude/skills` symlink is usually redundant.** The Code tab sees
-  the union of that injected plugin + native `~/.claude/skills`. **You do NOT need
-  a Cowork session to install or update from the Code tab** (verified): the
-  `.skill` build is a plain stdlib zip, and `open <file>.skill` triggers the
-  desktop install popup directly (see "Installing a `.skill` bundle" above). Only
-  the Cowork *Save-card* (`present_files`) itself needs a Cowork session — the
-  build and the `open`-based install do not.
-- **Cowork / Claude Desktop app surface:** package a `.skill` bundle and install
-  it via the desktop Save-card flow (a meta-skill like `install-cowork-skill`).
+  Anthropic built-ins **and** skills saved to the user's Claude account. So a
+  skill saved once in the Claude app already appears here (after the app syncs;
+  restart it if a just-saved skill is missing) — **a `~/.claude/skills` symlink
+  is usually redundant.** The Code tab sees the union of that injected plugin +
+  native `~/.claude/skills`. The `.skill` build is a plain stdlib zip, and
+  `open <file>.skill` triggers the desktop install popup directly (see
+  "Installing a `.skill` bundle" above).
+- **A Claude app conversation (web, desktop, or mobile):** see "Installing from
+  a Claude app conversation" below.
 
 Check `gemini skills list` for the Gemini side. Match an existing pattern only
 within the *same* channel — don't assume the symlinks in `~/.claude/skills`
@@ -646,7 +702,7 @@ when working from a local clone of the skills repo.
 
 Standalone Claude Code has no skill management CLI. Install by symlinking from
 a local clone of the marketplace repo (skip this if the user is on Claude
-Desktop and the skill is already installed via the Cowork `.skill` flow — it's
+Desktop and the skill is already saved to their Claude account — it's
 injected into the Code tab there):
 
 ```bash

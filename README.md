@@ -67,6 +67,16 @@ Development workflow skills.
 | [workstation-portability](coding/workstation-portability/SKILL.md) | Backup and portability for dotfiles, skills, and config |
 | [prioritize-github-issues](coding/prioritize-github-issues/SKILL.md) | Scan and rank issues across all repos/orgs by priority labels |
 | [transfer-github-repo](coding/transfer-github-repo/SKILL.md) | Transfer repos between orgs with optional rename |
+| [skill-author](coding/skill-author/SKILL.md) | Develop, validate, and publish skills, including data-backed skills |
+
+### [home/](home/)
+
+Household record-keeping. Data-backed skills that keep their records in the
+user's own cloud storage (written against Google Drive).
+
+| Skill | Description |
+|-------|-------------|
+| [light-bulbs](home/light-bulbs/SKILL.md) | Log installed bulbs and fixtures, spares on hand, and help choose replacements |
 
 ### [claude/](claude/)
 

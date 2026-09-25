@@ -17,7 +17,9 @@ wiped, or the user switches agent vendors.** Only two stores count as durable:
 | **The skill**, versioned in git or dotfiles | every process, convention, rule, and refinement | version control, installable on any agent |
 
 Chat history and agent memory are **not** storage. A fact that exists only in a
-conversation, or a rule the user stated only in chat, is lost.
+conversation, or a rule the user stated only in chat, is lost. Agent memory is
+never where a fact is saved; when it disagrees with the data store, the data
+store wins.
 
 The skill — not the user — is responsible for enforcing this. Every data-backed
 skill must carry these obligations in its own body so any agent that loads it
@@ -115,7 +117,8 @@ section.
 
 1. Search by the property. Exactly one match → use it for the session.
 2. Multiple matches → ask which is authoritative. Don't guess.
-3. No match → **stop and ask**: point me at an existing file (then tag it), or
+3. No match in **any** connected account or drive → **stop and ask**: point me
+   at an existing file (then tag it), or
    create a fresh one. **Never scaffold over data you merely failed to find** —
    an empty store that looks like the real one is worse than stopping.
 4. When creating: build the file in the format the skill specifies, write its
@@ -128,6 +131,30 @@ section.
   store. Never delete-and-recreate a file to "update" it.
 - Confirm before destructive changes (removing rows, tabs, or files).
 - If the tooling forces a history-destroying write, say so before writing.
+
+## Attachments (images, receipts, scans)
+
+Keep attachments in the user's cloud storage and link to them from the record,
+so they survive the conversation they were shared in.
+
+- **Storage:** one folder per skill, tagged `skill-data=<name>` and
+  `skill-data-role=attachments`; tag the main data file `skill-data-role=data`.
+  A record with 2+ attachments gets its own subfolder, and the record links the
+  subfolder. When a second attachment arrives, move the first into it. Links use
+  file IDs, so renames and moves don't break them.
+- **Where the link goes:**
+  - Attachments are **routine** for the table (e.g. a receipt per transaction) →
+    a dedicated link column (one file, or the record's folder).
+  - Attachments are **rare exceptions** → link inline in the record's free-text
+    field (notes, comments, description), next to the text it relates to, if
+    the tools support inline links.
+  - The tools support only whole-cell links and the text needs more than one
+    link or other text → store the URL(s) as **plain text** in that field.
+    Convert to inline links when the record is next edited, once supported; no
+    bulk backfill.
+  - Documents: inline links. JSON: a URL field.
+- **Can't upload** (tooling or sandbox limits) → ask the user to save the file
+  to their cloud storage, then link it.
 
 ## Capture obligations (embed in every data-backed skill)
 
@@ -156,6 +183,12 @@ When the user sets a rule, preference, or correction, write it down *now*:
   `Config` tab in an existing spreadsheet).
 
 A rule the user had to state twice is evidence one of these writes was missed.
+
+Promote only **lasting** rules. A lasting rule is about how things should always
+be done ("whenever", "never", "that's noise"). A one-off is about the thing in
+front of you ("give me that again", "use 3000K for this one"). Writing a one-off
+into the skill clutters it; treating a lasting rule as a one-off makes the user
+repeat it.
 
 ## Close-out audit
 
@@ -205,3 +238,21 @@ columns or fields and what each means, how dates work>
 ## Known tooling gaps
 <current limitations and the fallback used>
 ```
+
+## Design decisions
+
+- The key is `skill-data`, a neutral name, not a vendor- or project-branded
+  one: don't borrow a namespace you don't own. Propose it upstream if it proves
+  out.
+- Roles live in a property, not the filename, because filenames are
+  user-editable.
+- Public properties, not app-private, so every agent and client can discover
+  the files.
+- No pattern-version stamps in child skills: children are identifiable by their
+  `data-store` / `data-selector` metadata, which is enough to find and update
+  them.
+- How a child's own source gets updated and versioned stays here, not in each
+  child.
+- Deferred until a real case needs them: seeding a new store from scattered
+  existing data, revision expiry on non-native files (e.g. JSON), resurfacing
+  open items, concurrent-edit protection.
