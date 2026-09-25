@@ -496,38 +496,25 @@ the zip (not inside a parent folder).
 - List the zip's contents before presenting it, and confirm nothing unexpected
   is inside.
 
-#### Installing from a Claude app conversation (install first, then version)
+#### Installing from a Claude app conversation
 
-When the agent is running in a Claude app conversation (web, desktop, or
-mobile) — it can present files to the user but can't push to their repos —
-don't hand the user a prompt for another agent to write the skill. Write it
-here and install it here:
+When running in a Claude app conversation (it can present files but can't write
+to the user's repos), write the skill here rather than handing another agent a
+prompt to write it:
 
-1. **Write or edit the skill** in the conversation's working area. For an edit,
-   start from the currently installed copy, not from memory.
-2. **Package it.** A single-file skill can be presented as its `SKILL.md`; a
-   skill with `references/`, `scripts/`, or `assets/` needs a `.skill` bundle —
-   build it per "Building a `.skill` bundle" above.
-3. **Present it as a file card** so the user can save it to their account or
-   download it. Say what changed.
-4. **Verify on the next turn** that the installed copy matches what was
-   presented. The Claude app may rewrite frontmatter when it saves a skill
-   (e.g. wrapping `name:` in quotes), so a raw checksum of the installed
-   `SKILL.md` can differ from what you presented. Normalize frontmatter
-   quoting before comparing. If the content still differs, say so.
-5. **Prompt the user to absorb the source into a repo of their choice** (see
-   "Choose where the skill is versioned"). An account-only install is a single
-   point of failure with no history. Offer a short prompt for a local agent
-   (e.g. Claude Code) that copies the installed skill into the repo, verifies
-   the checksums, runs "Validate before publishing" when the repo is public,
-   and opens a PR. Any fingerprints in that prompt refer to the version as
-   authored, so the local agent must normalize the installed copy's
-   frontmatter quoting before comparing, and commit the version as authored
-   (e.g. `name: my-skill`, unquoted), not the app's rewritten form.
+1. Write or edit it, starting from the installed copy when editing.
+2. Package it: a single `SKILL.md`, or a `.skill` bundle per "Building a
+   `.skill` bundle".
+3. Present it as a file card to save or download, and say what changed.
+4. Prompt the user to add it to a repo of their choice (see "Choose where the
+   skill is versioned"), since an account-only copy has no history. Offer a
+   short prompt for a local agent to copy the installed skill into that repo and
+   then follow the user's normal workflow. Note that the app may reformat
+   frontmatter on save (e.g. quoting `name:`), so compare content, not bytes,
+   and keep the version as authored.
 
-This reverses the usual order (repo first, then install), but ends in the same
-state: installed copy and repo identical apart from the app's frontmatter
-formatting.
+A conversation can't see skills saved during it, so verification happens in the
+local agent or a new conversation.
 
 ### 2. Test the skill
 
