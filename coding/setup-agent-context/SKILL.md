@@ -1,35 +1,40 @@
 ---
 name: setup-agent-context
-description: "Configure coding agent context for a repo by setting up CLAUDE.md, .gemini/settings.json, and .gitignore rules. Use when starting a new project, onboarding a repo for AI-assisted development, or when asked to set up agent context, configure Claude/Gemini for a repo, or make a repo AI-ready."
+description: "Configure coding agent context for a repo by setting up CLAUDE.md, AGENTS.md (or GEMINI.md), .gemini/settings.json, and .gitignore rules. Use when starting a new project, onboarding a repo for AI-assisted development, or when asked to set up agent context, configure Claude/Gemini/Antigravity for a repo, or make a repo AI-ready."
 ---
 
-Set up the standard agent context files so that Claude Code and Gemini CLI
-both automatically load the repo's README.md and CONTRIBUTING.md as context.
+Set up the standard agent context files so that Claude Code, Antigravity, and
+Gemini CLI all automatically load the repo's README.md and CONTRIBUTING.md as
+context — with zero agent-only prose duplication.
 
 ## What this skill creates/updates
 
-1. **`CLAUDE.md`** (repo root) — a short pointer file
-2. **`.gemini/settings.json`** (repo root) — context file declarations
-3. **`.gitignore`** — exclude `.gemini/` but include `!.gemini/settings.json`
-4. **`README.md` / `CONTRIBUTING.md`** — links to every `docs/**/*.md`
+1. **`CLAUDE.md`** (repo root) — a short pointer file for Claude Code
+2. **`AGENTS.md`** (or existing **`GEMINI.md`** in repo root) — a short pointer file for Antigravity
+3. **`.gemini/settings.json`** (repo root) — context file declarations for Gemini CLI
+4. **`.gitignore`** — exclude `.gemini/` but include `!.gemini/settings.json`
+5. **`README.md` / `CONTRIBUTING.md`** — links to every `docs/**/*.md`
 
 ## What belongs where
 
-CLAUDE.md tells agents where to look. The actual content lives in:
+`CLAUDE.md` and `AGENTS.md` (or `GEMINI.md`) tell agents where to look. The
+actual content lives in:
 
 - **README.md** — what the project is, how to install and use it
 - **CONTRIBUTING.md** — architecture, design principles, constraints, testing
   conventions, SDK structure, how to add features
 
-This separation means both Claude Code and Gemini CLI get identical context
-from the same source files, with no duplication. Every other placement rule
-in this skill — including which file should link which docs — derives from
-this split.
+This separation means Claude Code, Antigravity, and Gemini CLI all get
+identical context from the same human-readable source files, with no
+duplication. Every other placement rule in this skill — including which file
+should link which docs — derives from this split.
 
 ## Step 1: Read existing files
 
 Before making changes, read these files if they exist:
 - `CLAUDE.md`
+- `AGENTS.md`
+- `GEMINI.md`
 - `.gemini/settings.json`
 - `.gitignore`
 - `README.md` (to confirm it exists)
@@ -178,7 +183,7 @@ field names, and any project-specific bump-significance rules
 needs to call that out). When in doubt, model the section after a
 sibling repo's existing Version Management section.
 
-## Step 4: Create or update CLAUDE.md
+## Step 4: Create or update CLAUDE.md (for Claude Code)
 
 The file should use Claude Code's `@path` import syntax to pull README.md
 and CONTRIBUTING.md into context at session start. Do not put project-specific
@@ -193,7 +198,42 @@ should be:
 If additional lines already exist in CLAUDE.md (e.g., PII warnings for
 public repos), preserve them. Only add the `@` imports if missing.
 
-## Step 5: Create or update .gemini/settings.json
+*Note on Claude Code and `AGENTS.md`:* By default (`claude-md-or-agents-md`),
+Claude Code reads `CLAUDE.md` only and ignores `AGENTS.md` whenever `CLAUDE.md`
+is present, so keeping both files causes zero duplicate loading.
+
+## Step 5: Create or update AGENTS.md or GEMINI.md (for Antigravity)
+
+Antigravity does not read `.gemini/settings.json`'s `context.fileName` or
+`CLAUDE.md`; instead, it automatically discovers `AGENTS.md` and `GEMINI.md`
+in the repository root and expands `@[label](path)` includes inline.
+
+### Which filename to use
+- If **`GEMINI.md` already exists** in the repo root and **`AGENTS.md` does not**,
+  keep using **`GEMINI.md`** for backwards compatibility.
+- Otherwise, create or update **`AGENTS.md`**.
+
+### Pointer content
+Do not put standalone project prose in `AGENTS.md` or `GEMINI.md` — move any
+existing architectural or contributor rules into `CONTRIBUTING.md` first, then
+set the file content to:
+
+```markdown
+@[README.md](README.md)
+@[CONTRIBUTING.md](CONTRIBUTING.md)
+```
+
+### 24 KB inline expansion check
+Antigravity enforces a **24,000-byte per-rule-file limit** after expanding
+`@[label](path)` includes. Check the combined byte size of `README.md` +
+`CONTRIBUTING.md`:
+- If under 24,000 bytes, include both `@[README.md](README.md)` and
+  `@[CONTRIBUTING.md](CONTRIBUTING.md)`.
+- If over 24,000 bytes, warn the user and include only
+  `@[CONTRIBUTING.md](CONTRIBUTING.md)` so contributor rules are never
+  truncated.
+
+## Step 6: Create or update .gemini/settings.json (for Gemini CLI)
 
 ```json
 {
@@ -209,7 +249,7 @@ public repos), preserve them. Only add the `@` imports if missing.
 If the file already exists, merge the context entries — don't overwrite
 other settings that may be present.
 
-## Step 6: Update .gitignore
+## Step 7: Update .gitignore
 
 Agent context directories (`.claude/`, `.gemini/`) contain a mix of
 versioned configuration and local-only state. The `.gitignore` must
@@ -234,7 +274,7 @@ Ensure these entries exist in `.gitignore`:
 Only add the `.claude/skills/` exception if the project actually has or
 will have project-scoped skills. Don't pre-create it speculatively.
 
-## Step 7: Verify git tracking
+## Step 8: Verify git tracking
 
 After modifying `.gitignore` or adding context/settings files for the
 first time, run `git status` and verify:
@@ -271,7 +311,7 @@ first time, run `git status` and verify:
    tracked, run `git check-ignore -v <path>` to confirm it is NOT
    ignored. For files that should stay excluded, confirm they ARE ignored.
 
-## Step 8: Security scan before committing
+## Step 9: Security scan before committing
 
 Before staging any file under `.claude/` or `.gemini/` for commit, scan
 its content for sensitive data:
@@ -296,11 +336,11 @@ read its full content and verify it contains nothing user-specific or
 sensitive before committing. This is especially important because these
 files are easy to commit reflexively with `git add .` without reviewing.
 
-## Step 9: Report
+## Step 10: Report
 
-Tell the user what was created or updated. Mention that both Claude Code
-and Gemini CLI will now load README.md and CONTRIBUTING.md as context, and
-that project-specific instructions belong in CONTRIBUTING.md. If any
-`docs/**/*.md` files were newly linked, list them and note where the link
-was added. If `.gitignore` was modified, note which files are now versioned
-and confirm no sensitive content was exposed.
+Tell the user what was created or updated. Mention that Claude Code,
+Antigravity, and Gemini CLI will now load README.md and CONTRIBUTING.md as
+context, and that project-specific instructions belong in CONTRIBUTING.md.
+If any `docs/**/*.md` files were newly linked, list them and note where the
+link was added. If `.gitignore` was modified, note which files are now
+versioned and confirm no sensitive content was exposed.
