@@ -285,6 +285,15 @@ dialogue with the user, then update it as conventions evolve. Bounded: prefer
 discovery, confirm before writing, match scope to applicability, never
 speculatively over-write.
 
+For a skill whose store may be cloud (tier 4) or local (tier 2), resolve the
+location once per session, in this order: a location already known this
+session wins; else, if the cloud connector can search by property and update
+in place, search by the `skill-data` property and — if nothing is found —
+propose creating the file there; else, if the filesystem is reachable, use
+the XDG path and propose creating it there; else stop and say which to set
+up. Never silently fall back to a weaker lookup (e.g. by filename) or invent
+a third store. Treat cloud and local as alternatives, not mirrors.
+
 **Principles**
 
 - **Prefer discovery over storage.** If a fact is re-derivable from the
@@ -335,7 +344,9 @@ speculatively over-write.
    learned prose context, not structured config. Use sparingly.
 4. **Centralized cloud** (a per-user file or sheet in the user's own cloud
    account, located via a public file property — `skill-data=<skill-name>`,
-   plus `skill-data-role=<role>` when the skill owns 2+ files). The **only
+   plus `skill-data-role=<role>` only when the skill owns 2+ files; a set of
+   skills that share one data file tags it with their common name prefix, e.g.
+   `skill-data=bills` for `bills-status` / `bills-pay`). The **only
    cross-surface** option; heaviest; adds a connector dependency and a tamper
    surface. Use when cross-device or multi-user truly requires it. A
    locked/hidden file (e.g. an app-private folder) resists casual tampering
