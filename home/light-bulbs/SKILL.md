@@ -44,11 +44,13 @@ properties has { key='skill-data' and value='light-bulbs' } and trashed = false
 - **No match in any connected account** → stop and ask: point me at an existing sheet (then tag it), or
   create a fresh one. Never create a new sheet just because the search came up
   empty. When creating: make the two tabs below with the headers exactly as
-  listed, tag the file, and tell the user where it is.
+  listed, tag the file (and each tab, as below), and tell the user where it is.
 
-Tabs are found **by title** (`Installed`, `Inventory`) until the spreadsheet
-tooling supports in-file metadata. If a tab title isn't found, ask; don't
-create a duplicate tab.
+Find each tab by its in-file metadata tag — `skill-data-role=installed` and
+`skill-data-role=inventory` (in Sheets, developer metadata on the tab) — when
+the spreadsheet tools can read it; otherwise by title (`Installed`,
+`Inventory`). If a tab is found by title but untagged and the tools can tag it,
+tag it. If neither finds a tab, ask; don't create a duplicate tab.
 
 ## Structure
 
@@ -171,7 +173,8 @@ discolored housing paint); note it as an observation and prefer LED.
 
 ## Known tooling gaps
 
-- Some spreadsheet tools can't add, rename, or delete tabs, or insert/delete
-  rows. If so: ask the user to add tabs by hand; to remove a row, rewrite the
-  rows below it upward and clear the last one — confirm first.
-- Tabs are located by title until in-file metadata lookup is available.
+- If the spreadsheet tools can't add tabs, ask the user to add them by hand.
+- If they can't delete rows, remove a row by rewriting the rows below it upward
+  and clearing the last one. Either way, confirm before removing a row.
+- If they can't read or write in-file metadata, find tabs by title (see
+  "Locating the data").

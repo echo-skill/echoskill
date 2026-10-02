@@ -107,11 +107,13 @@ place to look and fewer moving parts. Sections are spreadsheet tabs,
 document tabs or headings, or top-level keys in a JSON file. Use separate files
 when sharing settings, formats, or sizes differ.
 
-Find tabs and headings by title until the tooling supports metadata inside the
-file (e.g. Sheets developer metadata tagged `skill-data-role=<tab-role>`).
-Record in the skill which lookup method it currently uses. Users can rename
-tabs and headings, so if a title lookup fails, ask rather than create a new
-section.
+Users can rename tabs and headings, so prefer metadata inside the file over
+titles. Where the connected tools can read and write it (e.g. Sheets developer
+metadata), tag each section `skill-data-role=<section-role>` and find it by that
+tag. Where they can't, find it by title. The skill states both: the tag it
+applies and the title it falls back to. When a title lookup finds an untagged
+section and the tools can tag it, tag it then. If neither lookup finds the
+section, ask rather than create a new one.
 
 ## Provisioning — find, then ask, then create
 
@@ -236,7 +238,9 @@ columns or fields and what each means, how dates work>
 <adding, updating, correcting, reviewing records>
 
 ## Known tooling gaps
-<current limitations and the fallback used>
+<each capability the skill relies on that some tools lack, written as a check
+with a fallback — "if the tools can't X, do Y" — never as a claim about what
+today's tools can't do>
 ```
 
 ## Design decisions
