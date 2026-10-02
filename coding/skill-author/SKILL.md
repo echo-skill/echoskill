@@ -454,35 +454,13 @@ The `setup-agent-context` skill, if available, covers `.gitignore`
 management for agent directories in detail — including per-file
 guidance on what to version vs. exclude.
 
-#### Installing a `.skill` bundle (Claude desktop app, macOS)
+#### Installing a `.skill` bundle (Claude desktop app)
 
-Some platforms install a skill from a packaged `.skill` bundle rather
-than a filesystem path. On macOS, once you have the `.skill` file,
-hand it to the installer one of two ways — and **offer the user the
-choice**, because they serve different moments:
-
-| Command | What happens | When |
-|---|---|---|
-| `open -R <file>.skill` | Reveals the file **selected** in Finder; user drags it into the install UI | User wants to *see what they're installing and choose deliberately* |
-| `open <file>.skill` | `.skill` is registered to the Claude desktop app, so this (= double-click) launches the **install popup directly** — one click to install/replace | Fast, one-step install |
-
-Both are verified. More generally: whenever you direct a user to a
-local file they must act on (install, upload, attach, drag), run
-`open -R <path>` (reveal it selected) or `open <path>` (hand it to its
-handler) rather than just printing the path — it takes them straight
-there instead of making them hunt. To build the bundle, see "Building a
-`.skill` bundle" below.
-
-**Updating a skill that's already injected via `anthropic-skills`.**
-Re-installing an edited `.skill` this way **overwrites the managed copy
-in place** — including the copy a currently-running Code-tab session
-loads from — so the update takes effect without waiting for a new
-session, and leaves a **single** copy on disk (no stale duplicate).
-Prefer this over dropping a `~/.claude/skills/<name>` symlink *beside*
-an injected skill of the same name, which creates two same-named skills
-and ambiguity about which one loads. To confirm an install landed:
-locate the installed `SKILL.md` under the app's managed skills directory
-and `grep` it for a string unique to your edit (and check its mtime).
+Some platforms install a skill from a packaged `.skill` bundle rather than a
+filesystem path. For the Claude desktop app, the install commands, updating an
+installed skill, and how its saved copies propagate are in
+[references/claude-desktop.md](references/claude-desktop.md). To build the
+bundle, see "Building a `.skill` bundle" below.
 
 #### Building a `.skill` bundle
 
@@ -526,6 +504,21 @@ prompt to write it:
 
 A conversation can't see skills saved during it, so verification happens in the
 local agent or a new conversation.
+
+#### Verify the install landed — in the right place
+
+Some platforms keep more than one copy of an installed skill: the store the
+install writes to, and a separate copy that agents load from, which syncs
+later. Check a save against the store the install wrote; check what agents
+will actually get against the copy they load from, or ask a fresh agent to
+quote a line unique to your edit. Expect a lag between the two.
+
+Installers may also reformat frontmatter on save (quoting values, re-flowing
+folded strings). Compare frontmatter as parsed data and the body exactly, not
+file bytes, or every save will look like a difference.
+
+Claude desktop app specifics (both locations, the lag, the comparison):
+[references/claude-desktop.md](references/claude-desktop.md).
 
 ### 2. Test the skill
 
@@ -666,11 +659,12 @@ the agent is actually running:
   `CLAUDE_CODE_ENTRYPOINT=claude-desktop`):** the desktop app injects its own
   managed skills plugin (named `anthropic-skills`) into this tab, carrying
   Anthropic built-ins **and** skills saved to the user's Claude account. So a
-  skill saved once in the Claude app already appears here (after the app syncs;
-  restart it if a just-saved skill is missing) — **a `~/.claude/skills` symlink
-  is usually redundant.** The Code tab sees the union of that injected plugin +
-  native `~/.claude/skills`. The `.skill` build is a plain stdlib zip, and
-  `open <file>.skill` triggers the desktop install popup directly (see
+  skill saved once in the Claude app already appears here once the app syncs
+  its load copy (see [references/claude-desktop.md](references/claude-desktop.md))
+  — **a `~/.claude/skills` symlink is usually redundant.** The Code tab sees
+  the union of that injected plugin + native `~/.claude/skills`. The `.skill`
+  build is a plain stdlib zip, and `open <file>.skill` triggers the desktop
+  install popup directly (see
   "Installing a `.skill` bundle" above).
 - **A Claude app conversation (web, desktop, or mobile):** see "Installing from
   a Claude app conversation" below.
