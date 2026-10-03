@@ -1,8 +1,8 @@
 # Prompting
 
-Skills for direct user invocation via slash commands. These are typically
-invoked explicitly by the user (e.g., `/nm`, `/proceed`) rather than
-automatically by the agent.
+General-purpose session workflow skills: capturing context before a
+session ends, extending documents safely, deferring topics, and reviewing
+how a session went.
 
 ## Skills in this collection
 
@@ -17,7 +17,7 @@ automatically by the agent.
 
 The name `prompting/` originally described "skills invoked via slash
 commands" — which is true of the skills here but also true of almost any
-skill. The three skills currently in this collection share a more
+skill. The skills currently in this collection share a more
 specific theme: they're **generic cross-cutting workflow tools** that
 don't belong to any specific domain (coding, consulting, etc.). If this
 repo ever reorganizes its collections around subject matter rather than

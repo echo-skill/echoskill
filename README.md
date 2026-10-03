@@ -24,7 +24,7 @@ Gemini CLI also supports native skill installation without `em`:
 gemini skills install https://github.com/echo-skill/echoskill.git --path coding
 
 # Install one skill
-gemini skills install https://github.com/echo-skill/echoskill.git --path prompting/nm
+gemini skills install https://github.com/echo-skill/echoskill.git --path prompting/capture-context
 ```
 
 ### Platform targeting
@@ -42,14 +42,14 @@ em skills install capture-context --target gemini
 
 ### [prompting/](prompting/)
 
-User-invoked slash commands for prompt control.
+General-purpose session workflow skills.
 
 | Skill | Description |
 |-------|-------------|
-| [nm](prompting/nm/SKILL.md) | Nevermind — discard the last prompt |
-| [proceed](prompting/proceed/SKILL.md) | Continue after an interruption |
 | [capture-context](prompting/capture-context/SKILL.md) | Capture all session context before ending a conversation |
-| [pre-publish-privacy-review](prompting/pre-publish-privacy-review/SKILL.md) | Review content for privacy before publishing |
+| [extend-document](prompting/extend-document/SKILL.md) | Add to an existing document without losing its original content |
+| [for-later](prompting/for-later/SKILL.md) | Park a topic to revisit later without derailing the current work |
+| [retrospective](prompting/retrospective/SKILL.md) | Review a session for friction, retries, and missed automation |
 
 ### [coding/](coding/)
 
@@ -58,15 +58,27 @@ Development workflow skills.
 | Skill | Description |
 |-------|-------------|
 | [sociable-unit-tests](coding/sociable-unit-tests/SKILL.md) | Sociable unit testing with dir isolation and no mocks |
-| [develop-skill](coding/develop-skill/SKILL.md) | Build portable cross-platform skills |
 | [setup-agent-context](coding/setup-agent-context/SKILL.md) | Configure CLAUDE.md and .gemini/settings.json for a repo |
 | [author-github-issue](coding/author-github-issue/SKILL.md) | Structured GitHub issue authoring with privacy rules |
-| [publish-skill](coding/publish-skill/SKILL.md) | Publish skills to a marketplace |
 | [code-reuse](coding/code-reuse/SKILL.md) | Find and reuse existing code patterns |
 | [workspace-status](coding/workspace-status/SKILL.md) | Check workspace state across repos |
 | [prioritize-github-issues](coding/prioritize-github-issues/SKILL.md) | Scan and rank issues across all repos/orgs by priority labels |
 | [transfer-github-repo](coding/transfer-github-repo/SKILL.md) | Transfer repos between orgs with optional rename |
 | [skill-author](coding/skill-author/SKILL.md) | Develop, validate, and publish skills, including data-backed skills |
+| [agent-author](coding/agent-author/SKILL.md) | Create, configure, and publish agent and subagent definitions |
+| [project-docs](coding/project-docs/SKILL.md) | Keep README, CONTRIBUTING, and docs/ content in the right place without losing any |
+| [check-feature-support](coding/check-feature-support/SKILL.md) | Verify a feature, flag, or config key is actually supported before relying on it |
+| [plugin-installer](coding/plugin-installer/SKILL.md) | Install, update, or reinstall a Claude Code plugin from a marketplace |
+| [product-branding](coding/product-branding/SKILL.md) | Name products and check availability across domains, GitHub, and package registries |
+
+### [consulting/](consulting/)
+
+Advisory and research skills.
+
+| Skill | Description |
+|-------|-------------|
+| [identify-best-practices](consulting/identify-best-practices/SKILL.md) | Compare an approach against established industry practice |
+| [write-verified-advisory](consulting/write-verified-advisory/SKILL.md) | Write evidence-based technical advisories and research memos |
 
 ### [home/](home/)
 
@@ -76,6 +88,12 @@ user's own cloud storage (written against Google Drive).
 | Skill | Description |
 |-------|-------------|
 | [light-bulbs](home/light-bulbs/SKILL.md) | Log installed bulbs and fixtures, spares on hand, and help choose replacements |
+
+### Standalone
+
+| Skill | Description |
+|-------|-------------|
+| [inbox-triage](inbox-triage/SKILL.md) | Triage a Gmail inbox against your rules, with approval before anything changes |
 
 ### [claude/](claude/)
 

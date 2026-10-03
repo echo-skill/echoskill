@@ -99,8 +99,7 @@ Skills in a general-purpose marketplace must not hard-depend on tools that
 the average consumer of an open marketplace of skills is unlikely to have
 installed. If a skill needs a non-ubiquitous tool, it must offer 3+
 alternatives so it works for everyone. See the
-[develop-skill](coding/develop-skill/SKILL.md) for the full pattern and
-ordering rules.
+[skill-author](coding/skill-author/SKILL.md) skill for the pattern.
 
 ## Skill Memories
 
