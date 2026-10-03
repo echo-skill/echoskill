@@ -64,7 +64,6 @@ Development workflow skills.
 | [publish-skill](coding/publish-skill/SKILL.md) | Publish skills to a marketplace |
 | [code-reuse](coding/code-reuse/SKILL.md) | Find and reuse existing code patterns |
 | [workspace-status](coding/workspace-status/SKILL.md) | Check workspace state across repos |
-| [workstation-portability](coding/workstation-portability/SKILL.md) | Backup and portability for dotfiles, skills, and config |
 | [prioritize-github-issues](coding/prioritize-github-issues/SKILL.md) | Scan and rank issues across all repos/orgs by priority labels |
 | [transfer-github-repo](coding/transfer-github-repo/SKILL.md) | Transfer repos between orgs with optional rename |
 | [skill-author](coding/skill-author/SKILL.md) | Develop, validate, and publish skills, including data-backed skills |
