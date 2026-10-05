@@ -40,16 +40,14 @@ of the bundle — confirm they are connected before relying on them.
 | Connector | Required? | Used for |
 |---|---|---|
 | Google Workspace (Gmail) | **Required** | Reading the inbox, archiving (removing the `INBOX` label), reading individual emails. Without it the skill cannot run. |
-| Google Drive (`drive_search`, `drive_list_folder`, `drive_update_file`, `drive_set_properties`) | **Required unless the data root is local** | Locating and read/writing the data root — see "Locating your data". This is what makes the skill work on mobile and web, where there is no filesystem. If Drive is unavailable, the skill can still run against a local data root on a shell surface. |
-| A task manager MCP with `create_task` / `update_task` | Optional | The `track-as-task` outcome. If absent, surface the item to the user as "make a task" instead of creating one. |
-| A banking/finance MCP with `list_accounts` / `list_transactions` | Optional | The Financial-sweep safety checks (verify a balance is positive / autopay ran before archiving an alert). If absent, treat those alerts conservatively as `review` rather than auto-archiving. |
+| Google Drive tools that search by file property, list a folder, replace a file's content in place by its ID, and set file properties | **Required unless the data root is local** | Locating and read/writing the data root — see "Locating your data". This is what makes the skill work on mobile and web, where there is no filesystem. If Drive is unavailable, the skill can still run against a local data root on a shell surface. |
+| A task manager tool that creates and updates tasks | Optional | The `track-as-task` outcome. If absent, surface the item to the user as "make a task" instead of creating one. |
+| A banking/finance tool that lists accounts and transactions | Optional | The Financial-sweep safety checks (verify a balance is positive / autopay ran before archiving an alert). If absent, treat those alerts conservatively as `review` rather than auto-archiving. |
 
-Tool names vary by how the connector is registered in the session
-(the same Gmail connector may surface as `search_emails`,
-`remove_email_label`, `read_email`, etc. under different server
-prefixes). Use whatever Gmail / task / finance tools the session
-exposes; do not hardcode a specific server prefix, and do NOT use any
-deprecated deployed triage tools.
+Tool names vary by server and by how it is registered in the session.
+Use whatever Gmail / Drive / task / finance tools the session exposes
+that provide these capabilities; do not assume specific tool names, and
+do NOT use any deprecated deployed triage tools.
 
 ## Locating your data (run this FIRST, before anything else)
 
@@ -104,13 +102,13 @@ Resolve `$INBOX_DATA` in this order, stopping at the first that works:
                  and trashed = false
    ```
 
-   Take the folder id, `drive_list_folder` it, and read the files above
+   Take the folder id, list the folder's files, and read the files above
    by their predictable names. Nothing is hardcoded — not the folder's
    name, not its path, not a file id — so the user may rename or move
    the folder anywhere in Drive and discovery still resolves.
 
    **WRITING BACK — read this before you save anything.** Update the
-   EXISTING file in place, by its file id (`drive_update_file`). Revisions
+   EXISTING file in place, by its file id (replace its content). Revisions
    stack on that id, and that revision history IS the version store —
    it is what replaces git for these files.
 
@@ -122,9 +120,9 @@ Resolve `$INBOX_DATA` in this order, stopping at the first that works:
    available is more convenient than the update tool, that is not a
    reason — use the update tool.
 
-   Pin milestones with `keep_revision_forever`. Snapshot BEFORE a risky
+   Pin milestones (keep the revision forever, where the Drive tool offers it). Snapshot BEFORE a risky
    change as well as after, so there is a clean pre-change revision to
-   roll back to (`drive_list_revisions` / `drive_get_revision`).
+   roll back to (list the file's revisions and fetch an earlier one).
 
    **Known tooling gap — do not paper over it.** Some Drive MCPs expose
    an update tool that accepts ONLY base64, while the create tool accepts
@@ -149,7 +147,7 @@ Resolve `$INBOX_DATA` in this order, stopping at the first that works:
    ancestor) contains `inbox/rules.md`, use that `inbox/` directory.
 5. **Ask the user:** "Where do your inbox-triage rules live?" Offer:
    (a) point me at an existing Drive folder — then **tag it** with
-   `echoskill-data = inbox-triage` (`drive_set_properties`) so this is
+   `echoskill-data = inbox-triage` (a file property) so this is
    never asked again; (b) point me at a local folder; or (c) let me
    scaffold a fresh data root.
    - If scaffolding, **create the Drive folder and tag it**, seed it

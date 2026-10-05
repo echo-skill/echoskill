@@ -188,7 +188,8 @@ scripts when determinism matters and the target supports execution.
 
 ### Instruction-only patterns (the portable baseline)
 
-- Reference MCP tools by name: "call the `gapp_deploy` tool"
+- Describe the capability a step needs: "use a Drive tool that replaces a
+  file's content in place by its ID"
 - Describe commands the agent should run: "run `git status` on each repo"
 - Include hints, examples, or templates for the agent to adapt
 - Trust the agent to formulate execution plans with user approval
@@ -248,8 +249,14 @@ No registration or manifest needed beyond the file itself.
 - **Write for any agent by default.** Describe the desired outcome, not a
   tool-specific mechanism. Only target a specific agent platform when the
   user has explicitly said the skill is platform-specific.
-- **Reference tools by name** when the skill depends on them (e.g., MCP tools).
-  Note that the tool must be installed separately.
+- **Name the capability, not a tool.** When a step needs an external tool,
+  describe what it must do — "a Drive tool that replaces a file's content in
+  place by its ID", "a tool that lists a folder's files" — not one MCP
+  server's tool name. Users connect different servers for the same service,
+  and a named tool makes the skill look inapplicable to everyone else. Name a
+  specific tool as required only when the skill truly depends on that one
+  tool (its own MCP server, or a capability no other tool offers), and say it
+  must be installed separately.
 - **Include examples** of commands, workflows, or outputs the agent should
   produce. Agents perform better with concrete examples.
 - **Keep it focused.** One skill, one purpose. If it does two unrelated things,
