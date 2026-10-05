@@ -1,14 +1,13 @@
 ---
 name: skill-author
 description: >-
-  Guide for developing, validating, and publishing AI agent skills.
-  Provides reliable steps to make, build, create, or develop a skill,
-  to review or revise a skill, or to publish or register a new or
-  updated skill either locally — installing it at project, user, or
-  global scope for one or more agents — or to a central registry,
-  marketplace, or repo. Use when writing a SKILL.md, setting up
-  frontmatter, choosing where a skill belongs, or preparing a skill
-  for distribution.
+  Use when making, building, creating, developing, reviewing, revising,
+  validating, installing, or publishing an AI agent skill (SKILL.md).
+  Covers agentskills.io frontmatter, description auto-activation,
+  progressive disclosure and size limits, references/ layout, per-user
+  config and data-backed skills, choosing which reuse tier or repo a
+  skill belongs in, and installing or reconciling skills across project,
+  user, or global scope and marketplaces.
 ---
 
 # Developing Portable Agent Skills
@@ -26,12 +25,19 @@ If the user says they're building for just one platform, evaluate whether the
 skill's purpose is truly platform-specific by nature. Guide them toward portable
 design when feasible.
 
-**Scope of this skill.** This skill is about *portability and placement* — making
-a skill work across agents and putting it in the right home and tier. For the
-craft of building and evaluating a single skill (drafting, test prompts, evals,
-description-trigger tuning, packaging), defer to the agentskills.io spec and,
-where available, Anthropic's `skill-creator` — don't re-derive those basics here;
-assume the model and those resources carry them.
+**Scope of this skill.** This skill is about *portability, progressive
+disclosure, and placement* — making a skill work across agents, structuring it
+so instructions never truncate, and putting it in the right home and tier. For
+the craft of building and evaluating a single skill (drafting, test prompts,
+evals, description-trigger tuning), defer to the agentskills.io spec and, where
+available, Anthropic's `skill-creator` — don't re-derive those basics here.
+
+| Topic | Reference |
+|-------|-----------|
+| Per-user config & state (default-don't-bind seams, discover-or-seed, prose docs as config, 4 storage tiers) | [references/config-and-state.md](references/config-and-state.md) |
+| Data-backed skills (cloud file formats, `skill-data` property discovery, provisioning, in-place writes, capture obligations, close-out audit, child skeleton) | [references/data-backed-skills.md](references/data-backed-skills.md) |
+| Installing locally across agent platforms, building `.skill` bundles, headless testing, publishing workflow, duplicate-install & repo-drift reconciliation, and subagent preloading | [references/install-and-publish.md](references/install-and-publish.md) |
+| Claude desktop app specifics (`.skill` install on macOS, updating in place, the two saved copies and sync lag, comparing reformatted frontmatter) | [references/claude-desktop.md](references/claude-desktop.md) |
 
 ## First — does this already have a home?
 
@@ -46,7 +52,7 @@ existing one should grow.
 ## Skill Format: agentskills.io Standard
 
 Skills use the [agentskills.io](https://agentskills.io/specification) open
-standard, supported by 30+ tools (Claude Code, Gemini CLI, VS Code/Copilot,
+standard, supported by 30+ tools (Claude Code, Gemini CLI, Antigravity, VS Code,
 Cursor, and many others).
 
 A skill is a directory containing `SKILL.md` with YAML frontmatter:
@@ -62,129 +68,179 @@ Instructions for the agent...
 
 ### Required Fields
 
-- `name` — lowercase, hyphens, 1-64 chars, must match directory name
-- `description` — up to **1024 characters** (agentskills.io spec). This
-  field is for **discovery and selection only** — it tells agents and
-  users *when* this skill applies and *what problem it solves*, not
-  *how* it works.
+- `name` — lowercase alphanumeric and single hyphens (`a-z0-9-`), 1–64 chars,
+  must match directory name.
+- `description` — up to **1024 characters** (agentskills.io spec). This field is
+  for **discovery and selection only** — it tells agents and users *when* this
+  skill applies and *what problem it solves*, not *how* it works.
 
-  **Front-load the first 250 characters.** Claude Code truncates
-  descriptions beyond 250 chars in the skill listing. Put the primary
-  trigger and use case up front. Additional keywords and scenarios can
-  follow after 250 chars — they're still available when the full
-  description loads into context, just not visible in the listing.
+  **Front-load the first 250 characters.** Claude Code truncates descriptions
+  beyond 250 chars in the compact skill listing, caps combined `description` +
+  `when_to_use` at **1,536 characters**, and budgets the total skill listing at
+  **1% of the context window** (dropping least-used descriptions when
+  overflowing). Put the primary trigger and use case up front. Additional
+  keywords and scenarios can follow after 250 chars — they remain available when
+  the full description loads into context.
 
-  **Use imperative framing.** Include "Use when..." to tell the agent
-  when to act. Agents are making a selection decision — tell them when
-  to select this skill, not just what it is.
+  **Use imperative framing.** Include "Use when..." to tell the agent when to
+  act. Agents are making a selection decision — tell them when to select this
+  skill, not just what it is.
 
-  **Cover synonyms and verb variants.** Users say the same thing many
-  ways. A skill for building skills should say "make, build, create,
-  develop" not just "create". A PDF skill should say "reading,
-  extracting, combining, merging, splitting..." — enumerate the verbs.
-  This is established best practice per agentskills.io: "err on the
-  side of being pushy" and "include cases where the user doesn't name
-  the domain directly."
+  **Cover synonyms and verb variants.** Users say the same thing many ways. A
+  skill for building skills should say "make, build, create, develop" not just
+  "create". A PDF skill should say "reading, extracting, combining, merging,
+  splitting..." — enumerate the verbs. Per agentskills.io best practices: "err
+  on the side of being pushy" and "include cases where the user doesn't name the
+  domain directly."
 
-  **Avoid disqualifying language.** The description gates selection.
-  If it mentions a specific platform, an agent building for a different
-  platform may skip it. If it says "portable" or "cross-platform", an
-  agent building a platform-specific skill may skip it. Keep the
-  description maximally inclusive — opinionated guidance (like "prefer
-  portability") belongs in the body where it can be articulated with
-  nuance, not in the gate where it's a binary filter.
+  **Avoid disqualifying language.** The description gates selection. If it
+  mentions a specific platform, an agent building for a different platform may
+  skip it. If it says "portable" or "cross-platform", an agent building a
+  platform-specific skill may skip it. Keep the description maximally inclusive
+  — opinionated guidance (like "prefer portability") belongs in the body where
+  it can be articulated with nuance, not in the gate where it's a binary filter.
 
-  Example: a skill for building agent skills should NOT say "for Claude
-  Code and Gemini CLI" in the description — an agent building a Cursor
-  skill or a platform-specific skill would self-exclude. The body can
-  then guide toward portability where appropriate.
-
-  **Add negative triggers only when non-obvious.** "Don't use for Vue
-  or Svelte projects" helps a CSS skill avoid false triggers. "Not for
-  using existing skills" is obvious and only hurts invocation chances.
-  If the boundary is clear from context, don't state it.
+  **Add negative triggers only when non-obvious.** "Don't use for Vue or Svelte
+  projects" helps a CSS skill avoid false triggers. "Not for using existing
+  skills" is obvious and only hurts invocation chances.
 
   **Do:**
   - Name the activity or situation that triggers it
   - Say what outcome the skill produces
   - Use "Use when..." imperative framing
   - Cover synonyms — enumerate the verbs and nouns users might say
-  - Use the full 1024 chars if needed for thorough keyword coverage
+  - Use up to 1024 chars if needed for thorough keyword coverage (with no
+    `<...>` angle brackets, which the Claude app `.skill` uploader rejects)
 
   **Do NOT:**
   - Include implementation details (tool names, commands, file formats)
   - Include agent instructions ("read the file", "render in chat")
   - Describe the skill's internal workflow or steps
-  - Mention specific platforms unless the skill is genuinely
-    platform-specific by nature
+  - Mention specific platforms unless the skill is genuinely platform-specific
   - Add negative triggers for boundaries that are already obvious
-  - Repeat what belongs in the body of the SKILL.md
-
-  The body of SKILL.md is where implementation details, agent
-  instructions, rules, anti-patterns, and workflow steps go.
+  - Repeat what belongs in the body of `SKILL.md`
 
 ### Optional Fields (agentskills.io)
 
-- `compatibility` — max 500 chars, environment requirements. Covers
-  both system dependencies ("Requires git, docker, jq") and intended
-  product ("Designed for Claude Code (or similar products)") per the
-  spec's own examples. Use it when a skill genuinely requires specific
-  tools, runtimes, or agent features. Don't add it reflexively when
-  the skill works everywhere — most skills don't need this field.
-- `metadata` — arbitrary key-value map for additional properties
-- `allowed-tools` — space-delimited pre-approved tools (experimental)
-- `license` — license name or reference to a bundled license file.
-  Only include if the user suggests it.
+The open standard defines 6 total frontmatter keys (`name`, `description`, plus
+these 4 optional keys):
 
-### Platform Extension Fields
+- `compatibility` — max 500 chars, environment requirements. Covers both system
+  dependencies ("Requires git, docker, jq") and intended product ("Designed for
+  Claude Code (or similar products)"). Omit when the skill works everywhere.
+- `metadata` — arbitrary key-value map for additional properties.
+- `allowed-tools` — space-delimited pre-approved tools (experimental).
+- `license` — license name or reference to a bundled license file. Only include
+  if the user suggests it.
 
-These are Claude Code extensions. Other agents silently ignore them.
+### Platform Extension Fields & `.skill` Bundle Portability
 
-- `disable-model-invocation: true` — user-only / slash-only, agent won't auto-invoke. Also blocks programmatic agent invocation via the Skill tool — only the user typing the slash command works.
-- `user-invocable: false` — ambient-only, hidden from slash menu
-- `allowed-tools: Bash, Read` — pre-approved tools
-- `argument-hint: "[pattern]"` — autocomplete hint
-- `context: fork` — run in isolated subagent
-- `agent: Explore` — subagent type when `context: fork` is set
-- `model` — model override when skill is active
-- `effort` — effort level override (low/medium/high/max)
-- `paths: "**/*.py"` — glob patterns limiting when skill activates
-- `shell` — `bash` (default) or `powershell`
-- `hooks` — skill-scoped lifecycle hooks
+Claude Code supports additional frontmatter keys (`disable-model-invocation`,
+`user-invocable`, `argument-hint`, `context: fork`, `agent`, `model`, `effort`,
+`paths`, `shell`, `hooks`, `when_to_use`).
 
-Using platform extension fields does not make a skill non-portable —
-other agents silently ignore unknown fields. But if the skill *depends*
-on a platform extension to function (e.g., `context: fork` is essential
-to its operation), note that in `compatibility`.
+- **Filesystem installs (`~/.claude/skills/`, `~/.gemini/skills/`,
+  `~/.gemini/config/skills/`):** Other agents silently ignore unknown
+  frontmatter keys, so extension keys do not break filesystem loading. If the
+  skill *depends* on a platform extension to function (e.g., `context: fork`),
+  note that in `compatibility`.
+- **`.skill` bundles (Claude app / `claude.ai` upload and `package_skill.py`):**
+  The `.skill` packager and Claude app uploader **strictly validate against the
+  6 `agentskills.io` keys** (`name`, `description`, `license`, `compatibility`,
+  `metadata`, `allowed-tools`) and **reject any other frontmatter key** with
+  `Unexpected key(s) in SKILL.md frontmatter`. Never add platform extension
+  keys to a skill that will be packaged as a `.skill` bundle or shared across
+  Claude Desktop / `claude.ai`.
 
+## Progressive Disclosure, Size Limits & Context Architecture
+
+Skills use a **three-tier progressive disclosure model** so agents can carry
+dozens of skills with near-zero baseline context cost:
+
+1. **Tier 1 — Catalog (`name` + `description` at session start):** ~50–100
+   tokens per skill. Keep `description` $\le$ 1024 chars and front-load the
+   first 250 chars.
+2. **Tier 2 — `SKILL.md` Body (on activation):** Keep `SKILL.md` **under 500
+   lines and `< 5,000 tokens` (~20 KB)**.
+   - *Why these limits matter across harnesses:*
+     - **agentskills.io spec:** Recommends `< 500 lines` and `< 5,000 tokens`
+       for the `SKILL.md` body.
+     - **Claude Code:** Recommends `< 500 lines`, and **on auto-compaction
+       re-attaches only the first `5,000 tokens` (~20 KB) of each invoked
+       skill** (within a 25,000-token combined budget across all active skills).
+       Anything past 5,000 tokens is dropped after compaction.
+     - **Antigravity / Gemini IDEs:** Load `SKILL.md` on demand via file-view
+       tools that truncate a single read at **800 lines** or **46,080 bytes
+       (~45 KB)**.
+   - **Front-load invariants and routing:** Place non-negotiable rules, core
+     principles, and the `references/` routing table near the top of `SKILL.md`
+     so they always survive single-call reads and context compaction.
+3. **Tier 3 — Bundled Resources (`references/`, `scripts/`, `assets/` on
+   demand):**
+   - Move detailed procedures, platform-specific mechanics, schemas, templates,
+     and long examples into `references/*.md`.
+   - **Keep reference files one level deep** from `SKILL.md` (`SKILL.md` →
+     `references/topic.md`, never `SKILL.md` → `references/a.md` →
+     `references/b.md`). Both `agentskills.io` and Claude Code warn that agents
+     may read nested reference chains only partially.
+   - **Route explicitly from `SKILL.md`:** Include a 1-line summary of each
+     topic in `SKILL.md` and a routing table (`| Topic | Reference |`) stating
+     *when* to read each file so the agent knows what exists before opening any
+     reference.
+
+### Global Context (`CONTEXT.md` / `CLAUDE.md` / `GEMINI.md` / `AGENTS.md`) vs. Hub / Router Skills
+
+Always-on global context files face strict size and truncation limits (for
+example, Antigravity caps individual rule files at **24 KB** / 20,000 aggregate
+tokens and can truncate large global files around ~12 KB; Claude Code
+recommends keeping `CLAUDE.md` under **200 lines**). Never dump long procedural
+workflows into global context files.
+
+Use this division of labor between always-on global context and skills:
+
+- **Skill descriptions catch user-request triggers** — when the user's prompt
+  asks to do something the skill covers, the agent matches the skill's
+  `description` and loads `SKILL.md`.
+- **Global context catches autonomous agent decisions** — when the agent
+  decides *on its own* mid-task where to place a new file/config/repo, which
+  library to choose, how to scaffold a project, or what pre-commit checks to
+  run, skill descriptions won't fire because the user didn't ask about those
+  choices.
+- **Pattern:** Keep Global Context compact (~5–10 KB) containing only:
+  1. **Universal safety, privacy, and identity invariants** that must hold in
+     every turn even when no skill is loaded.
+  2. **1-line autonomous-decision trigger pointers** to compact **Hub / Router
+     Skills** (e.g., *"Load `<coding-hub-skill>` before deciding where
+     code/configs/skills/repos go, scaffolding, choosing a framework, deploying,
+     or releasing"*).
+  Each Hub Skill stays compact (`< 200 lines`) with a 1-line-per-topic summary
+  and a routing table pointing one level deep to `references/*.md`.
 
 ## Scripts in Skills — supported; instruction-only is a portability choice
 
 **Skills can bundle and execute scripts.** The Agent Skills standard defines a
 skill as a directory that can carry `scripts/` alongside `SKILL.md`, and agents
-that support it run them. Reference bundled files by their path within the skill's
-own directory — how that directory is resolved at runtime is agent-specific (Claude
-Code exposes a `${CLAUDE_SKILL_DIR}` variable for it; don't assume that exact
-variable exists on every agent — check the target's docs). Bundling a script is
-fully legitimate — it keeps deterministic logic *with* the skill, so it installs
-everywhere the skill does. The decision is **portability**, not permission.
+that support it run them. Reference bundled files by their path within the
+skill's own directory — how that directory is resolved at runtime is
+agent-specific (Claude Code exposes `${CLAUDE_SKILL_DIR}`; don't assume that
+exact variable exists on every agent — check the target's docs). Bundling a
+script keeps deterministic logic *with* the skill, so it installs everywhere the
+skill does. The decision is **portability**, not permission.
 
-- **Instruction-only is the most portable.** Gemini's `run_shell_command` requires
-  approval by default, and the allowlist that grants it is global session /
-  Policy-Engine config, not scoped to an individual skill — you *can* restrict it
-  to specific command prefixes (e.g. `run_shell_command(git)`), but that's a
-  user-level setting the skill can't control. The Claude app's `.skill` packaging
-  is **stdlib-only** (no venv/pip). So a skill that bundles runnable scripts —
-  especially ones needing dependencies — narrows to Claude Code (or compatible)
-  and can't ship as a stdlib-only `.skill` bundle or assume shell access under
-  Gemini's defaults.
-- **Targeting Claude Code (or compatible)? Bundle scripts freely.** If the skill's
-  value is a deterministic, repeatable operation, put it in `scripts/` and call it
-  from `SKILL.md`. Progressive disclosure applies to code as well as reference
-  docs.
+- **Instruction-only is the most portable.** Gemini's `run_shell_command`
+  requires approval by default, and the allowlist that grants it is global
+  session / Policy-Engine config, not scoped to an individual skill. The Claude
+  app's `.skill` packaging is **stdlib-only** (no venv/pip). So a skill that
+  bundles runnable scripts — especially ones needing dependencies — narrows to
+  Claude Code (or compatible) and can't ship as a stdlib-only `.skill` bundle or
+  assume shell access under Gemini's defaults.
+- **Targeting Claude Code (or compatible)? Bundle scripts freely.** If the
+  skill's value is a deterministic, repeatable operation, put it in `scripts/`
+  and call it from `SKILL.md`. Progressive disclosure applies to code as well as
+  reference docs.
 
-Default to instruction-only when one skill must work across *every* agent; bundle
-scripts when determinism matters and the target supports execution.
+Default to instruction-only when one skill must work across *every* agent;
+bundle scripts when determinism matters and the target supports execution.
 
 ### Instruction-only patterns (the portable baseline)
 
@@ -199,8 +255,6 @@ scripts when determinism matters and the target supports execution.
 Bundling a script does NOT require a plugin. Reach for a **plugin** (Claude) or
 **extension** (Gemini) when you need MORE than a script: an MCP server, hooks,
 dependency / venv management, lifecycle, or distribution as a cross-agent unit.
-"This skill needs to run code" is satisfied by a bundled script; the packaging
-layer is for the rest.
 
 ## Marketplace Structure
 
@@ -209,40 +263,21 @@ Skills live in git repos organized as directories:
 ```
 skills-repo/
 ├── prompting/              ← collection
-│   ├── nm/SKILL.md
-│   └── proceed/SKILL.md
+│   ├── capture-context/SKILL.md
+│   └── extend-document/SKILL.md
 ├── coding/                 ← collection
-│   ├── develop-skill/SKILL.md
-│   └── develop-unit-tests/SKILL.md
+│   ├── skill-author/SKILL.md
+│   └── sociable-unit-tests/SKILL.md
 └── claude/                 ← platform-specific collection
     └── sessions/SKILL.md
 ```
 
-**Collection** = a folder of skill subfolders. Installable as a group:
-```bash
-gemini skills install <url> --path coding
-```
-
-Or individually:
-```bash
-gemini skills install <url> --path coding/skill-author
-echomodel skills install skill-author
-```
-
-## Installation
-
-Skills are installed via `echomodel skills install` (cross-platform) or
-`gemini skills install` (Gemini native). Standalone Claude Code has no skill
-CLI — `echomodel` writes directly to `~/.claude/skills/`. The **Claude app**
-(web, desktop, mobile) is a separate channel: skills saved there are stored on
-the user's account, and the desktop app caches them into a managed
-`anthropic-skills` plugin that its Code tab loads (see "Detect the surface" under
-*After Writing* for picking the right channel). Chat and Cowork were merged into
-one Claude conversation in September 2026, so anything older that says "Cowork"
-now means an ordinary Claude conversation.
-
-Agents discover skills by scanning directories for `SKILL.md` files.
-No registration or manifest needed beyond the file itself.
+**Collection** = a folder of skill subfolders, installable as a group or
+individually (`gemini skills install <url> --path coding/skill-author`,
+`gemini skills link <local-path>/coding/skill-author`, or
+`echomodel skills install skill-author`). Agents discover skills by scanning
+directories for `SKILL.md` files — no registration or manifest needed beyond the
+file itself.
 
 ## Writing Good Skill Instructions
 
@@ -261,119 +296,56 @@ No registration or manifest needed beyond the file itself.
   produce. Agents perform better with concrete examples.
 - **Keep it focused.** One skill, one purpose. If it does two unrelated things,
   split it into two skills.
+- **Coherent specification, not a history exposé.** Write `SKILL.md` and
+  `references/*.md` to describe what the design *is*, not the history of how it
+  got there or deprecated prior approaches.
 
 ## Per-User Config & State: Where It Lives
 
 When a skill needs per-user configuration or must remember resolved state
 (account ids, which thing is which, user preferences), decide *where* that
-lives deliberately. Present the applicable options to the user when it matters;
-don't reach for a heavy store by default.
+lives deliberately. Read
+[references/config-and-state.md](references/config-and-state.md) for the full
+design patterns ("Default, don't bind", "Discover or seed", cloud-vs-local
+resolution order, and prose documents as config sources).
 
-**Default, don't bind.** State an opinionated skill's approach (a specific
-tool/backend/dependency — "I use Google Drive"; "the Downloads folder, i.e.
-`~/Downloads` on macOS") as a *default*, not a hard binding. Write the
-load-settings seam wide enough that an adopter can substitute the backend with
-low churn — resolved at runtime by discovery or a short dialogue, or supplied in
-their own context file at whatever scope. Structure it for **accreting
-examples**: work one provider concretely and *name* the alternatives even before
-they're fully worked, so an OneDrive / Dropbox / Ubuntu / Windows user isn't shut
-out on day one (the seam says "for others, discover or ask"); add same-depth
-hints for the rest over time without rewriting. This is what makes a Patterned
-skill genuinely promotable. Bound it with the reuse-value check: build
-substitutability only where adopter-substitution is plausible (Patterned/Generic,
-not Bespoke), and keep it *cheap to discover*, not pre-built for every backend —
-over-generalizing every skill into infinite pluggability is its own failure mode.
+**Core principles:**
 
-**Discover or seed (provision, don't just read).** Resolve settings by discovery
-first. When a durable store is genuinely needed and absent, create it at the
-scope matching the skill's install scope — an agent context file
-(`CLAUDE.md`/`GEMINI.md`/`CONTEXT.md`) or an XDG config file — and seed it in
-dialogue with the user, then update it as conventions evolve. Bounded: prefer
-discovery, confirm before writing, match scope to applicability, never
-speculatively over-write.
-
-For a skill whose store may be cloud (tier 4) or local (tier 2), resolve the
-location once per session, in this order: a location already known this
-session wins; else, if the cloud connector can search by property and update
-in place, search by the `skill-data` property and — if nothing is found —
-propose creating the file there; else, if the filesystem is reachable, use
-the XDG path and propose creating it there; else stop and say which to set
-up. Never silently fall back to a weaker lookup (e.g. by filename) or invent
-a third store. Treat cloud and local as alternatives, not mirrors.
-
-**Principles**
-
-- **Prefer discovery over storage.** If a fact is re-derivable from the
-  system-of-record at runtime, derive it instead of storing it. Discover by
-  **structural signals** (types, subtypes, status, recent activity), **not by
-  user-chosen names/labels** — names are themselves user-specific config, so
-  matching on them just relocates the problem. Discovery also **self-heals**
-  when an underlying id changes (e.g. an account recreated on a reconnection
-  keeps its type/name but gets a new id).
-- **Keep the skill generic; put user-specifics behind one "load settings"
-  seam** so the *source* can change without touching skill logic.
-- **Confirm-once-then-persist** for discoveries that are genuinely ambiguous.
-- **Config need not be structured — and often shouldn't be.** Before defining a
-  schema, ask whether the per-user facts are really *settings* at all. Public
-  reference data (published rates, limits, tax tables) is not user config — it's
-  domain knowledge the skill carries. Domain mechanics (how often a thing
-  happens, how a value is derived) belong in the skill, not a preferences file.
-  Mutable, re-derivable state (a "last done" date, a current balance) should be
-  read live, never stored stale. Strip those out and a structured config file is
-  frequently left with nothing — or with content that already lives, as prose,
-  in a document the user maintains.
-- **A prose doc the skill locates is a first-class config source.** When the
-  user already keeps the relevant policy as a written document (a project
-  `*.md`, a runbook, a standing-rules file), the right "load settings" seam is
-  to **find that doc and read it**, not to re-encode it as JSON. Locate it by
-  convention (look in the current project), and **if it isn't found, ask the
-  user where it is** (remember for the session; re-discovery is cheap). This
-  keeps the skill generic, avoids a second copy that drifts, and respects that
-  the user's document is the system-of-record.
+- **Default, don't bind.** State an opinionated backend/tool as a default behind
+  a single "load settings" seam so adopters can substitute alternatives (worked
+  or named) without rewriting skill logic.
+- **Prefer discovery over storage.** Re-derive facts from the system-of-record
+  at runtime using **structural signals** (types, subtypes, status), **not
+  user-chosen names/labels**. Confirm once and persist only when genuinely
+  ambiguous.
+- **A prose doc is a first-class config source.** Public reference data and
+  domain mechanics belong in the skill; mutable state should be read live. When
+  the user already keeps policy in a written project doc (`*.md`, runbook,
+  standing rules), find and read that doc rather than re-encoding it as JSON.
 
 **Tiers — cheapest / most portable first:**
 
-1. **Runtime discovery → session memory.** Re-derive each session from the
-   system-of-record. Zero storage, fully portable, self-healing. The default
-   when discovery is cheap and confident.
-2. **Local file.** For machine-local state with no obvious home, `~/.config/<name>.json`
-   (a flat file is spec-compliant; graduate to `~/.config/<name>/` once more than
-   one file is needed). Prefer **JSON over YAML** when a stdlib-only reader
-   matters — Python reads `json` with no install; `yaml` needs a package (venv).
-   But match the *shape* to the data (see principles): if the user already keeps
-   this as a prose document, the file is **that doc, located in-project or
-   asked-for** — not a new structured schema. Resolve by an absolute, well-known
-   path (XDG base dir, or the discovered doc's path); **never a cwd-relative path
-   or a hardcoded workspace root** — both break across sessions and machines.
-3. **Agent permanent memory.** Spans sessions, but is typically **per-surface and
-   local** — it does **not** sync across agent surfaces (e.g. a CLI agent vs a
-   web/mobile app of the same vendor are separate memory stores). It's for
-   learned prose context, not structured config. Use sparingly.
-4. **Centralized cloud** (a per-user file or sheet in the user's own cloud
-   account, located via a public file property — `skill-data=<skill-name>`,
-   plus `skill-data-role=<role>` only when the skill owns 2+ files; a set of
-   skills that share one data file tags it with their common name prefix, e.g.
-   `skill-data=bills` for `bills-status` / `bills-pay`). The **only
-   cross-surface** option; heaviest; adds a connector dependency and a tamper
-   surface. Use when cross-device or multi-user truly requires it. A
-   locked/hidden file (e.g. an app-private folder) resists casual tampering
-   better than a user-editable spreadsheet — but app-private properties are
-   invisible to other agents and clients, so don't use them for discovery.
+1. **Runtime discovery → session memory** — zero storage, self-healing default.
+2. **Local file** — `~/.config/<name>.json` (prefer JSON over YAML for
+   stdlib-only reading) or the user's located prose doc; resolve by absolute XDG
+   or discovered path, **never** a cwd-relative path or hardcoded workspace
+   root.
+3. **Agent permanent memory** — local per-surface prose context only (does not
+   sync across CLI vs. web/mobile app).
+4. **Centralized cloud** — per-user cloud file/sheet located via public property
+   `skill-data=<skill-name>` (plus `skill-data-role=<role>` when owning 2+
+   files). The only cross-surface option; use when cross-device or multi-user
+   truly requires it.
 
 ## Data-Backed Skills
 
-When a skill's purpose is to capture and maintain user data across sessions
-(a log, inventory, tracker, body of research, or piece of writing), its data
-lives in centralized cloud
-files (tier 4 above) and the skill itself takes on an explicit durability
-responsibility: nothing of value may be lost if a session ends, an agent's
-memory is wiped, or the user changes agent vendors. Read
+When a skill's purpose is to capture and maintain user data across sessions (a
+log, inventory, tracker, body of research, or piece of writing), its data lives
+in centralized cloud files (tier 4 above) and the skill itself takes on an
+explicit durability responsibility: nothing of value may be lost if a session
+ends, an agent's memory is wiped, or the user changes agent vendors. Read
 [references/data-backed-skills.md](references/data-backed-skills.md) before
-authoring or revising one — it covers choosing each file's format, the
-discovery convention, provisioning,
-in-place writes, capture obligations every such skill must embed, promoting
-refinements into the skill as they happen, the close-out audit, and a child
-skill skeleton.
+authoring or revising one.
 
 **Binding-dependency caveat:** cross-surface config portability is moot unless
 the skill's required tools/connectors actually exist on that surface — the
@@ -385,486 +357,67 @@ Every skill sits in one of three tiers along two axes — exposure (private ↔
 published) and generality (one-instance ↔ broadly useful):
 
 - **Generic** — published / shareable. **Zero PII, ever.** Lives in a
-  cross-cutting marketplace, or the specific tool's own public repo when it's
-  coupled to that tool. Use when the value is genuinely reusable and has an
-  audience beyond one.
+  cross-cutting marketplace, or the specific tool's own public repo when coupled
+  to that tool. Use when the value is genuinely reusable and has an audience
+  beyond one.
 - **Patterned** — private, opinionated ("here's how I do X; you could too").
-  Identifiers externalized to config (per "Per-User Config & State"). Built as a
-  **promotion candidate**: keep mechanism and identity cleanly separated so it can
-  graduate to Generic — or serve another user — with a light refactor, never a
-  rewrite.
+  Identifiers externalized to config. Built as a **promotion candidate**: keep
+  mechanism and identity cleanly separated so it can graduate to Generic — or
+  serve another user — with a light refactor, never a rewrite.
 - **Bespoke** — private, single-instance, welded to one vendor/account. Don't
   genericize the method (no audience). Still externalize *sensitive* identifiers
-  (account numbers, card last-4s, billing ids) to config; non-sensitive specifics
-  may stay inline.
+  (account numbers, card last-4s, billing ids) to config; non-sensitive
+  specifics may stay inline.
 
-The test for any fact: *would another person's copy need a different value here?*
-→ it's identity → config, not skill.
+The test for any fact: *would another person's copy need a different value
+here?* → it's identity → config, not skill.
 
-**Reuse-value check — defer, don't duplicate.** Before investing to make something
-Generic, or promoting Patterned → Generic, ask whether the reusable value is real
-and *not already owned* by an existing artifact (especially a well-maintained or
-official one). If it's covered, don't duplicate it or water your skill down
-competing — defer to the existing artifact and keep only your genuine delta. (For
-the craft of building and evaluating a single skill, that's the agentskills.io
-spec and Anthropic's `skill-creator`; see "Scope of this skill" — this skill's
-delta is portability and placement.)
+**Reuse-value check — defer, don't duplicate.** Before investing to make
+something Generic, or promoting Patterned → Generic, ask whether the reusable
+value is real and *not already owned* by an existing artifact (especially a
+well-maintained or official one). If it's covered, defer to the existing
+artifact and keep only your genuine delta.
 
 ## After Writing: Install, Test, Publish
 
-Skills are fast-to-market by design. The goal is to impact the user's
-workflow quickly — a skill sitting uninstalled helps no one. In most
-cases, install immediately after writing with limited or no interim
-testing. The skill format is low-risk and easy to revise in place.
-
-Publishing is equally urgent. If a skill isn't version-controlled in
-a known location and available across the user's working environments,
-it erodes trust in the entire skills workflow. Skills that feel
-chaotically scattered — local copies here, stale versions there, no
-change history — discourage the user from investing time in writing
-or adopting them. Publish promptly to a tracked, central location so
-the user can rely on skills being available, up to date, and backed
-up wherever they work.
-
-The exception is publishing to broadly adopted skills marketplaces
-where multiple users are affected. There, test thoroughly before
-publishing — a broken skill at scale is worse than a delayed one.
-
-### 1. Install locally
-
-Install the skill so it's available in your agent platform before
-publishing anywhere.
-
-| Scope | Path | When to use |
-|-------|------|-------------|
-| User / machine | `~/.claude/skills/<name>/SKILL.md` | Default. Available in all projects on this machine. |
-| Project | `.claude/skills/<name>/SKILL.md` | Skill is specific to this repo and should be versioned with it. |
-| Gemini | `gemini skills install <path-or-url>` | Gemini CLI native install. |
-
-**User-scope is the default.** Install at project scope only when the
-skill is inherently tied to the repo (e.g., repo-specific workflow,
-project conventions).
-
-**Project-scoped skills and git tracking.** When installing at project
-scope, ensure the skill files will be version-controlled:
-
-1. Check that `.claude/skills/` is not gitignored. Many repos ignore
-   `.claude/` entirely — add a `!.claude/skills/` exception in
-   `.gitignore` if needed.
-2. Run `git status` after creating the skill to confirm the new
-   `SKILL.md` appears as untracked or staged.
-3. If a `.gitignore` change was required, verify it didn't expose
-   other files under `.claude/` (settings, cache, logs). Evaluate any
-   newly surfaced files case by case before committing.
-
-The `setup-agent-context` skill, if available, covers `.gitignore`
-management for agent directories in detail — including per-file
-guidance on what to version vs. exclude.
-
-#### Installing a `.skill` bundle (Claude desktop app)
-
-Some platforms install a skill from a packaged `.skill` bundle rather than a
-filesystem path. For the Claude desktop app, the install commands, updating an
-installed skill, and how its saved copies propagate are in
-[references/claude-desktop.md](references/claude-desktop.md). To build the
-bundle, see "Building a `.skill` bundle" below.
-
-#### Building a `.skill` bundle
-
-A `.skill` bundle is a zip of the skill directory with `SKILL.md` at the root of
-the zip (not inside a parent folder).
-
-- **Build from committed code** when the skill lives in a repo: commit first,
-  then build, so what gets installed always matches version control. (In a
-  Claude app conversation with no repo, see the next section.)
-- **Include only what the skill needs:** `SKILL.md` plus any `references/`,
-  `scripts/`, and `assets/` it uses.
-- **Exclude:** `.git/`, virtualenvs (`venv/`, `.venv/`), `node_modules/`,
-  caches (`__pycache__/`, `*.pyc`), editor and OS clutter (`*.swp`,
-  `.DS_Store`), and above all **secrets and personal data** — `.env` files,
-  credentials, tokens, local config, or user data files. `.git/` matters for
-  the same reason: it carries the full history, including anything once
-  committed and later removed.
-- **Check before handing it over:** the frontmatter `description` is at most
-  1024 characters with no tag-like `<...>` text (the Claude app rejects
-  either), and any bundled scripts use the standard library only (see
-  "Scripts in Skills").
-- List the zip's contents before presenting it, and confirm nothing unexpected
-  is inside.
-
-#### Installing from a Claude app conversation
-
-When running in a Claude app conversation (it can present files but can't write
-to the user's repos), write the skill here rather than handing another agent a
-prompt to write it:
-
-1. Write or edit it, starting from the installed copy when editing.
-2. Package it: a single `SKILL.md`, or a `.skill` bundle per "Building a
-   `.skill` bundle".
-3. Present it as a file card to save or download, and say what changed.
-4. Prompt the user to add it to a repo of their choice (see "Choose where the
-   skill is versioned"), since an account-only copy has no history. Offer a
-   short prompt for a local agent to copy the installed skill into that repo and
-   then follow the user's normal workflow. Note that the app may reformat
-   frontmatter on save (e.g. quoting `name:`), so compare content, not bytes,
-   and keep the version as authored.
-
-A conversation can't see skills saved during it, so verification happens in the
-local agent or a new conversation.
-
-#### Verify the install landed — in the right place
-
-Some platforms keep more than one copy of an installed skill: the store the
-install writes to, and a separate copy that agents load from, which syncs
-later. Check a save against the store the install wrote; check what agents
-will actually get against the copy they load from, or ask a fresh agent to
-quote a line unique to your edit. Expect a lag between the two.
-
-Installers may also reformat frontmatter on save (quoting values, re-flowing
-folded strings). Compare frontmatter as parsed data and the body exactly, not
-file bytes, or every save will look like a difference.
-
-Claude desktop app specifics (both locations, the lag, the comparison):
-[references/claude-desktop.md](references/claude-desktop.md).
-
-### 2. Test the skill
-
-**Verify it's discoverable.** Before testing behavior, confirm the
-agent platform sees the skill:
-
-```bash
-# Gemini CLI
-gemini skills list
-
-# Claude Code — check the slash menu or ask:
-claude -p "list your available skills"
-```
-
-If the skill doesn't appear, check the install path and directory name.
-
-**Test behavior.** Run a headless prompt that indirectly reveals
-whether the skill loaded and influenced the agent's behavior. The
-prompt should exercise the skill's guidance without requiring actual
-disk I/O or other privileged tool usage — this keeps the test fast
-and safe.
-
-```bash
-# Claude Code
-claude -p "prompt that reveals the skill's effectiveness"
-
-# Gemini CLI
-gemini -p "prompt that reveals the skill's effectiveness"
-```
-
-**Designing a good test prompt:**
-
-- Ask the agent to describe how it would approach a task the skill
-  covers. The response should reflect the skill's specific guidance,
-  not generic behavior.
-- If the skill has distinctive rules or preferences, ask about a
-  scenario where those rules apply and check whether the response
-  follows them.
-- Add `--allowedTools ""` or similar flags to prevent actual tool
-  execution if the prompt might trigger it. The goal is to verify the
-  skill shaped the agent's reasoning, not to run a full workflow.
-- For skills with `user-invocable: true`, test slash-command invocation
-  too: does `/my-skill` trigger it?
-
-### 3. Publish
-
-Once the skill works locally, publish it. Skills that stay local get
-forgotten — publish promptly so the skill is available where you (and
-others) will actually use it. If the user hasn't specified a
-destination, ask where it should go and push for a decision now.
-
-#### Choose where the skill is versioned — always ask
-
-Every skill must end up version-controlled somewhere durable; an installed-only
-copy is a single point of failure. **Ask the user which repo it belongs in** —
-don't assume the public marketplace. Decide by reuse tier (see "Reuse tiers"):
-
-- **Generic** → a public marketplace (e.g. echoskill), only after the "Validate
-  before publishing" checks pass.
-- **Patterned / Bespoke** → a **private** git repo of the user's skills, or the
-  user's **dotfiles** if that's how they version machine config (chezmoi, yadm,
-  GNU Stow, or a bare-repo dotfiles setup — ask which they use). Private does
-  not mean unversioned.
-- Unsure whether content is safe to publish → treat it as private. Moving a
-  skill from private to public later is easy; retracting a public leak is not.
-
-Data-backed skills (see "Data-Backed Skills") are usually Patterned or Bespoke:
-the generic process may be publishable, but personal specifics belong in the
-data store, not the skill. When a skill mixes both, split it: generic mechanism
-in the skill, identity in the data store.
-
-Save the chosen destination (per "Reconcile local installs with skills repo")
-so later sessions don't re-ask.
-
-#### Where to publish
-
-**Cross-platform skills** go in the primary skills marketplace (e.g.,
-echoskill). These work across agents and belong in topical collections
-(`coding/`, `prompting/`, `consulting/`).
-
-**Platform-specific skills** go in a platform-specific collection or repo.
-If a skill genuinely only works on one agent (e.g., depends on Claude Code's
-`context: fork` or Gemini-specific features), publish it under a
-platform-specific collection (e.g., `claude/`) in the marketplace, or in a
-platform-specific repo. Don't pollute the primary cross-platform marketplace
-with skills that only work on one agent.
-
-### Determine placement
-
-Glob the target repo for `*/SKILL.md` and `*/*/SKILL.md` to understand how
-skills are organized. Show the user the existing structure and confirm which
-collection the skill belongs in. If the skill already exists (same name),
-confirm the user wants to update it.
-
-### Validate before publishing
-
-Before copying to the target:
-
-- **Frontmatter is complete**: `name` and `description` are required.
-- **Name matches directory name.**
-- **No references to specific consuming repos or projects.** Usage
-  examples must be generic. If repo-specific references are found,
-  rewrite them to be generic before publishing.
-- **No PII or user-specific identifiers** — account numbers, emails, names,
-  repo/store names, folder ids, property names, real dollar figures. That's
-  *identity*, not mechanism: externalize per "Per-User Config & State" and recall
-  at runtime. If a different user would need a different value, it's leaked config
-  — pull it out before publishing.
-- **Bundled scripts are fine, but note the portability cost** — a skill that
-  bundles executable scripts targets Claude Code (or compatible); for a skill that
-  must work across every agent, keep it instruction-only or move the code to a
-  plugin/package (see "Scripts in Skills").
-- **No hard dependencies on non-ubiquitous tools** without offering
-  alternatives.
-
-### Publish workflow
-
-1. Copy the skill directory to the target repo at the confirmed path
-2. Update the README.md table for the collection if one exists
-3. `git diff --staged` to review
-4. Confirm with the user
-5. Commit and push
-
-### Installing from a marketplace on other machines
-
-After publishing, show the user how to install the skill elsewhere.
-Use actual values from the publish (repo URL, collection, skill name)
-— not angle-bracket placeholders.
-
-**Detect the surface before choosing a method — don't just copy whatever
-`~/.claude/skills/` already shows.** The right install path depends on where
-the agent is actually running:
-
-- **Standalone Claude Code (terminal CLI, `CLAUDE_CODE_ENTRYPOINT=cli`):**
-  filesystem only — symlink into `~/.claude/skills/<name>/`, `npx skills add`,
-  or a plugin. This is the only channel here.
-- **Claude Code embedded in the Claude Desktop app (the "Code" tab,
-  `CLAUDE_CODE_ENTRYPOINT=claude-desktop`):** the desktop app injects its own
-  managed skills plugin (named `anthropic-skills`) into this tab, carrying
-  Anthropic built-ins **and** skills saved to the user's Claude account. So a
-  skill saved once in the Claude app already appears here once the app syncs
-  its load copy (see [references/claude-desktop.md](references/claude-desktop.md))
-  — **a `~/.claude/skills` symlink is usually redundant.** The Code tab sees
-  the union of that injected plugin + native `~/.claude/skills`. The `.skill`
-  build is a plain stdlib zip, and `open <file>.skill` triggers the desktop
-  install popup directly (see
-  "Installing a `.skill` bundle" above).
-- **A Claude app conversation (web, desktop, or mobile):** see "Installing from
-  a Claude app conversation" below.
-
-Check `gemini skills list` for the Gemini side. Match an existing pattern only
-within the *same* channel — don't assume the symlinks in `~/.claude/skills`
-are how a Desktop user's skills got there. Save the resolved method to memory.
-
-**Gemini CLI:**
-
-```bash
-# Install a single skill from a collection
-gemini skills install <repo-url> --path <collection>/<skill-name>
-
-# Install an entire collection
-gemini skills install <repo-url> --path <collection>
-
-# Link a local clone (live updates, no reinstall needed)
-gemini skills link <local-path>/<collection>/<skill-name>
-```
-
-`gemini skills link` creates a live link — edits to the source are
-reflected immediately with no reinstall. Prefer this over `install`
-when working from a local clone of the skills repo.
-
-**Claude Code (standalone CLI — see surface detection above):**
-
-Standalone Claude Code has no skill management CLI. Install by symlinking from
-a local clone of the marketplace repo (skip this if the user is on Claude
-Desktop and the skill is already saved to their Claude account — it's
-injected into the Code tab there):
-
-```bash
-# Clone the skills repo (once per machine)
-git clone <repo-url> <local-path>
-
-# Symlink the skill
-ln -s <local-path>/<collection>/<skill-name>/SKILL.md \
-  ~/.claude/skills/<skill-name>/SKILL.md
-```
-
-Symlinks keep the local install in sync with `git pull` — no re-copy
-needed after updates.
-
-**Plugin-bundled skills:**
-
-If the skill ships inside a Claude Code plugin rather than a
-standalone marketplace, the install command is different:
-
-```bash
-claude plugin install <plugin-name>@<marketplace> --scope user
-```
-
-Skills bundled in plugins are managed by the plugin lifecycle, not
-by manual symlinks or copies.
-
-### Avoiding duplicate installs
-
-A skill can reach an agent through more than one channel:
-
-- **Plugin/extension bundle** — managed by the packaging layer's
-  install and update lifecycle.
-- **Standalone symlink** — a link from the user-scope skills
-  directory to a source repo. Live updates via `git pull`.
-- **Standalone copy** — a plain file in the user-scope skills
-  directory. Static snapshot, no link back.
-
-Each is valid alone. But when two channels deliver the same skill
-simultaneously, the agent's slash menu and skills listing show the
-skill twice, and whichever copy loads first may not be the one the
-user expected.
-
-**Rule: one channel per skill per machine.** If the user's installed
-plugin/extension already bundles the skill, do not also install it
-standalone. If they've chosen the symlink path, do not install the
-bundling plugin/extension.
-
-**Bundling scope (for authors of plugins/extensions):** a
-plugin/extension should bundle a skill only if the plugin's own
-machinery (its agents, hooks, MCP servers, native skills, or scripts)
-directly depends on that skill. Bundling a skill purely for user
-convenience — because it's useful alongside the plugin — is an
-"alt marketplace install" anti-pattern that creates the duplication
-problem above. General-purpose skills belong in their own marketplace;
-consumers install them separately.
-
-**When duplicates are already present, reconcile:**
-
-1. **Audit.** Search all install locations for the skill name —
-   user-scope skill directories for standalone copies and symlinks,
-   plugin/extension cache directories for bundled copies.
-2. **Classify.** For each hit, determine whether it is a bundled copy
-   (under a plugin/extension cache), a symlink to a source repo (run
-   `readlink` or `ls -la`), or a static standalone copy.
-3. **Pick one channel.** Prefer the channel already used for similar
-   skills on this machine — don't introduce a new pattern for a
-   single skill.
-4. **Remove the others.** Standalone copies and symlinks: delete from
-   the user-scope directory. Bundled copies: uninstall the bundling
-   plugin/extension — but only if that plugin as a whole is the
-   channel being dropped, not because it happens to bundle one
-   duplicate skill.
-5. **Restart the agent session** so menus and listings rebuild
-   against the resolved set.
-
-**The slash menu and skills listing are the warning signal.** If the
-same skill name appears more than once, a duplicate-install situation
-exists. Investigate before assuming one version is authoritative.
-
-### Reconcile local installs with skills repo
-
-Skills drift when they exist in multiple places — the local platform
-install directory and the personal skills repo. Every publish action
-is an opportunity to reconcile.
-
-**Locate the skills repo.** Check memory for a previously saved
-skills repo path. If not found, ask the user where their personal
-skills repo / marketplace lives and save it to memory for future
-sessions (e.g., memory name: `skills-repo-location`, type:
-`reference`).
-
-**Known local install locations:**
-- `~/.claude/skills/<name>/SKILL.md` — Claude Code user-scope
-- `~/.gemini/skills/<name>/SKILL.md` — Gemini CLI user-scope (if
-  applicable; check `gemini skills list` for installed locations)
-- `.claude/skills/<name>/SKILL.md` — project-scope (current repo)
-
-**For each skill being published, compare across all locations:**
-
-1. **Gather facts.** For each copy of the skill (local installs +
-   repo), check:
-   - Does the file exist?
-   - File size and last-modified timestamp (`stat` or `ls -la`)
-   - Content (`diff` between copies)
-
-2. **Report to the user.** Present a clear status for each location:
-   - **Missing in repo but installed locally** — the skill hasn't
-     been published yet. Recommend copying local → repo.
-   - **In repo but not installed locally** — the skill was published
-     but never installed on this machine, or was removed. Recommend
-     copying repo → local.
-   - **Identical in both** — in sync, nothing to do.
-   - **Different** — show the diff. Recommend a direction based on
-     timestamps (newer usually wins), but always ask the user which
-     version to keep, or whether to merge changes manually.
-
-3. **Act with user's blessing.** After the user confirms the
-   direction:
-   - Copy the chosen version to the target location(s)
-   - Stage, commit, and push the skills repo if it was updated
-   - Confirm the local install is current if that was updated
-
-4. **Save the repo location to memory** if not already saved, so
-   future publish actions skip the "where is your skills repo?" step.
-
-**Do this reconciliation proactively** — don't wait for the user to
-ask. Every time a skill is published or updated, check the other
-locations and flag drift. The goal is a single source of truth in the
-repo with local installs as consistent copies.
-
-### Consider agent preloading
-
-If the skill was developed for use by a specific agent (e.g., a coding
-agent, a review agent), consider whether that agent's `skills:` frontmatter
-should be updated to preload it. Preloading injects the full skill content
-into the agent's context at startup — the agent doesn't need to discover
-or invoke the skill; it just has the knowledge.
-
-```yaml
-# In the agent's .md frontmatter:
-skills:
-  - safe-commit
-  - show-code       # ← new skill preloaded here
-```
-
-**Platform support for skill preloading in agents:**
-
-- **Claude Code** — supported via `skills:` list in agent/subagent
-  frontmatter. Full skill content is injected at startup. Subagents
-  don't inherit skills from the parent; list them explicitly.
-  ([Claude Code docs: Preload skills into subagents](https://code.claude.com/docs/en/sub-agents#preload-skills-into-subagents))
-- **Gemini CLI** — no equivalent mechanism as of 2026. Skills are
-  discovered and loaded via progressive disclosure, not preloaded
-  into agent definitions.
-- **agentskills.io** — the spec covers skill format only, not agent
-  definitions or skill-to-agent binding.
-
-**When to preload vs. let the agent discover:**
-
-- Preload when the agent should *always* have this knowledge (e.g.,
-  commit workflow, code style rules)
-- Let discovery handle it when the skill is situational (e.g.,
-  PDF processing, dependency evaluation)
+Skills are fast-to-market by design: install immediately after writing, verify
+discoverability and behavior, and publish promptly to a version-controlled
+repository so skills never drift as untracked local copies.
+
+Read [references/install-and-publish.md](references/install-and-publish.md) for
+the full step-by-step commands and workflows, and
+[references/claude-desktop.md](references/claude-desktop.md) when targeting the
+Claude desktop app. Key rules at a glance:
+
+1. **Detect the surface first (one channel per skill per machine):**
+   - **Standalone Claude Code CLI (`CLAUDE_CODE_ENTRYPOINT=cli`):** symlink into
+     `~/.claude/skills/<name>`.
+   - **Claude Desktop Code tab (`CLAUDE_CODE_ENTRYPOINT=claude-desktop`):**
+     loads the managed `anthropic-skills` plugin (synced from the user's Claude
+     account) *plus* `~/.claude/skills/`. If the skill is saved to the Claude
+     account, a `~/.claude/skills` symlink creates a duplicate — install/update
+     via `.skill` bundle instead (see
+     [references/claude-desktop.md](references/claude-desktop.md)).
+   - **Gemini CLI:** prefer `gemini skills link <local-path>` for local clones,
+     or `gemini skills install <repo-url> --path <collection>/<skill-name>`.
+   - **Antigravity (`agy`):** relative symlink in
+     `~/.gemini/config/skills/<name>` (or workspace `.agents/skills/<name>`).
+2. **Choose where the skill is versioned — always ask:**
+   - **Generic** → public marketplace (e.g., `echoskill`) after validation.
+   - **Patterned / Bespoke** → private git repo of the user's skills or their
+     dotfiles. Unsure whether content is safe to publish → treat as private.
+3. **Validate before publishing:**
+   - Frontmatter has `name` (matching directory) and `description` ($\le 1024$
+     chars, no `<...>` tags); uses only the 6 standard `agentskills.io` keys if
+     packaged as `.skill`.
+   - `SKILL.md` is under 500 lines and `< 5,000 tokens` (~20 KB); detailed
+     procedures live one level deep in `references/*.md`.
+   - Zero PII, zero user/project-specific identifiers, and 3+ alternatives if
+     referencing non-ubiquitous tools.
+4. **Reconcile proactively:** Whenever publishing or updating a skill, compare
+   all local install locations (`~/.claude/skills/`, `~/.gemini/skills/`,
+   `~/.gemini/config/skills/`, `.claude/skills/`) against the source repo and
+   resolve any drift or duplicate channels with the user's blessing.
 
 ## Close the flywheel
 
@@ -878,57 +431,20 @@ watch-behavior proposes skills, it doesn't silently generate them.
 
 ## Cross-Skill References
 
-Skills must be self-contained. A skill that fails or misleads when a
-referenced skill is absent is a broken skill. Follow these rules when
-one skill relates to another:
+Skills must be self-contained. A skill that fails or misleads when a referenced
+skill is absent is a broken skill.
 
-### Only reference co-packaged skills
-
-Only reference skills distributed in the same unit — same marketplace
-collection, same plugin, same repo. Never reference skills from
-external sources; they may not be installed.
-
-### Hint-level only
-
-References must be non-essential hints to supplementary content. The
-referencing skill must function fully on its own. Use language like:
-
-> "The `setup-agent-context` skill, if available, covers this in
-> more detail."
-
-> "See the `safe-commit` skill if installed for commit workflow
-> guidance."
-
-Never write references that create a dependency:
-
-> "Follow the steps in `setup-agent-context` to complete this task."
-
-> "This skill requires `safe-commit` to be installed."
-
-### Prefer duplication over cross-skill dependencies
-
-If a skill needs specific content from another skill to work correctly,
-duplicate that content inline. Three repeated paragraphs are better
-than a dependency chain that breaks when a skill is missing.
-
-### Exception: platform-native bundled skills
-
-Skills that are privately co-bundled into an **agent platform** (Claude
-Code, Gemini CLI, Cursor, or similar native agent environments) — and
-are NOT also published from the same source into a skills marketplace —
-may use firm cross-references. The platform ships them as a unit, so
-co-presence is guaranteed.
-
-This exception does NOT apply to marketplace-published skills, even if
-they also happen to be bundled into a platform. If a skill is available
-outside the platform (via a marketplace, a shared repo, or standalone
-installation), it must follow the hint-level rules above, because
-marketplace consumers may pick and choose which skills to install.
-
-### Terminology note
-
-**Agent platform** is the umbrella term for native agent environments
-— Claude Code, Gemini CLI, Cursor, and similar tools where agents
-execute with access to tools, files, and skills. Use "agent platform"
-(not "IDE", "CLI", or "runtime" alone) when referring to this category
-generically.
+- **Only reference co-packaged skills** — distributed in the same marketplace
+  collection, plugin, or repo. Never reference skills from external sources.
+- **Hint-level only** — references must be non-essential hints to supplementary
+  content (e.g., *"The `setup-agent-context` skill, if available, covers this in
+  more detail."*). Never write references that create a hard dependency.
+- **Prefer duplication over cross-skill dependencies** — if a skill needs
+  specific content from another skill to work correctly, duplicate those
+  paragraphs inline rather than creating a dependency chain that breaks when a
+  skill is missing.
+- **Exception: platform-native bundled skills** — skills privately co-bundled
+  into an **agent platform** (Claude Code, Gemini CLI, Antigravity, Cursor — use
+  "agent platform" as the umbrella term, not "IDE" or "CLI" alone) and *not*
+  published to a standalone marketplace may use firm cross-references because
+  co-presence is guaranteed.
