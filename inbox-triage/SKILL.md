@@ -40,7 +40,7 @@ of the bundle — confirm they are connected before relying on them.
 | Connector | Required? | Used for |
 |---|---|---|
 | Google Workspace (Gmail) | **Required** | Reading the inbox, archiving (removing the `INBOX` label), reading individual emails. Without it the skill cannot run. |
-| Google Drive (`drive_search`, `drive_list_folder`, `drive_update`, `drive_set_properties`) | **Required unless the data root is local** | Locating and read/writing the data root — see "Locating your data". This is what makes the skill work on mobile and web, where there is no filesystem. If Drive is unavailable, the skill can still run against a local data root on a shell surface. |
+| Google Drive (`drive_search`, `drive_list_folder`, `drive_update_file`, `drive_set_properties`) | **Required unless the data root is local** | Locating and read/writing the data root — see "Locating your data". This is what makes the skill work on mobile and web, where there is no filesystem. If Drive is unavailable, the skill can still run against a local data root on a shell surface. |
 | A task manager MCP with `create_task` / `update_task` | Optional | The `track-as-task` outcome. If absent, surface the item to the user as "make a task" instead of creating one. |
 | A banking/finance MCP with `list_accounts` / `list_transactions` | Optional | The Financial-sweep safety checks (verify a balance is positive / autopay ran before archiving an alert). If absent, treat those alerts conservatively as `review` rather than auto-archiving. |
 
@@ -110,7 +110,7 @@ Resolve `$INBOX_DATA` in this order, stopping at the first that works:
    the folder anywhere in Drive and discovery still resolves.
 
    **WRITING BACK — read this before you save anything.** Update the
-   EXISTING file in place, by its file id (`drive_update`). Revisions
+   EXISTING file in place, by its file id (`drive_update_file`). Revisions
    stack on that id, and that revision history IS the version store —
    it is what replaces git for these files.
 
