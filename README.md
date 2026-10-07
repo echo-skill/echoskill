@@ -64,6 +64,7 @@ Development workflow skills.
 | [workspace-status](coding/workspace-status/SKILL.md) | Check workspace state across repos |
 | [prioritize-github-issues](coding/prioritize-github-issues/SKILL.md) | Scan and rank issues across all repos/orgs by priority labels |
 | [transfer-github-repo](coding/transfer-github-repo/SKILL.md) | Transfer repos between orgs with optional rename |
+| [yaml-config-merge](coding/yaml-config-merge/SKILL.md) | Reusable snippet for merging layered YAML config (lists merge by id; disabled flag) |
 | [skill-author](coding/skill-author/SKILL.md) | Develop, validate, and publish skills, including data-backed skills |
 | [agent-author](coding/agent-author/SKILL.md) | Create, configure, and publish agent and subagent definitions |
 | [project-docs](coding/project-docs/SKILL.md) | Keep README, CONTRIBUTING, and docs/ content in the right place without losing any |
