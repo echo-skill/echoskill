@@ -24,8 +24,10 @@ shows. The right install channel depends on where the agent is actually running:
   managed skills plugin (named `anthropic-skills`) into this tab, carrying
   Anthropic built-ins **and** skills saved to the user's Claude account. So a
   skill saved once in the Claude app already appears here once the app syncs
-  its load copy (see `references/claude-desktop.md`) — **a `~/.claude/skills`
-  symlink is usually redundant.** The Code tab sees the union of that injected
+  its load copy (see `references/claude-desktop.md`). **Here, the Claude
+  account is the default channel. Keep a `~/.claude/skills` link only for a
+  skill that can run only on this machine (it drives the local browser or
+  reads local files), and never install one skill both ways.** The Code tab sees the union of that injected
   plugin + native `~/.claude/skills`. The `.skill` build is a plain stdlib zip,
   and `open <file>.skill` triggers the desktop install popup directly.
 - **A Claude app conversation (web, desktop, or mobile):** see "Installing from

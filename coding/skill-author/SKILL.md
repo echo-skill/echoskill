@@ -442,9 +442,21 @@ skill is absent is a broken skill.
 - **Prefer duplication over cross-skill dependencies** — if a skill needs
   specific content from another skill to work correctly, duplicate those
   paragraphs inline rather than creating a dependency chain that breaks when a
-  skill is missing.
+  skill is missing. This applies to method content only.
+- **User-specific data is never duplicated; name it by role.** User-specific
+  data (personal information, identifiers, and the user's own settings, such as
+  which email address serves which purpose) lives in one place. A skill that
+  needs it names what it needs ("the user's business email") and lets the agent
+  resolve it from loaded context or a skill that provides it, asking the user
+  when unsure. It never copies the value and never points into another skill's
+  data store.
 - **Exception: platform-native bundled skills** — skills privately co-bundled
   into an **agent platform** (Claude Code, Gemini CLI, Antigravity, Cursor — use
   "agent platform" as the umbrella term, not "IDE" or "CLI" alone) and *not*
   published to a standalone marketplace may use firm cross-references because
   co-presence is guaranteed.
+- **Exception: a private, co-installed collection** — in a private collection of
+  personalized skills that its owner always installs as a set, a skill may name
+  a sibling directly ("load `x` for Y"). It names the skill, never the sibling's
+  internal files or data store, and a skill leaving the collection counts as
+  external.
