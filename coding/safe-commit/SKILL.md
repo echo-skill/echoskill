@@ -107,7 +107,9 @@ the top of this skill if the user wants the mechanical layer back.
 
 If the user didn't give a message, draft one: summarize the nature of the
 change (feature, fix, refactor), focus on the "why" over the "what", keep it to
-a sentence or two, and keep it free of personal context.
+a sentence or two, and keep it free of personal context — including session
+links or ids and agent co-author lines, even if the environment adds them by
+default.
 
 ```bash
 git commit -m "<message>"

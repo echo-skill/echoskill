@@ -263,6 +263,7 @@ insensitively, and reason about it.
 | `password`/`secret`/`token =` with a literal value | Hardcoded credential |
 | 44-char id in a Google Docs/Drive/Sheets URL | Document / drive id tied to an account |
 | `projects/<id>`, `arn:aws:...` with a 12-digit account id | Cloud project / account reference |
+| `claude.ai/code/session_…` or another agent-session link or id | Session identifier tied to an account |
 | SSN `XXX-XX-XXXX`, EIN `XX-XXXXXXX`, card 13–19 digits, 9-digit routing | Financial identifiers |
 
 This table is a floor, not a ceiling. Flag anything that looks like a
