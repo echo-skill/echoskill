@@ -69,6 +69,7 @@ Development workflow skills.
 | [agent-author](coding/agent-author/SKILL.md) | Create, configure, and publish agent and subagent definitions |
 | [project-docs](coding/project-docs/SKILL.md) | Keep README, CONTRIBUTING, and docs/ content in the right place without losing any |
 | [check-feature-support](coding/check-feature-support/SKILL.md) | Verify a feature, flag, or config key is actually supported before relying on it |
+| [safe-commit](coding/safe-commit/SKILL.md) | Stage, review, privacy-scan, and commit; push only on a clean review |
 | [plugin-installer](coding/plugin-installer/SKILL.md) | Install, update, or reinstall a Claude Code plugin from a marketplace |
 | [product-branding](coding/product-branding/SKILL.md) | Name products and check availability across domains, GitHub, and package registries |
 
