@@ -128,7 +128,9 @@ and email as values to flag if they appear **in file content, commit
 messages, or diffs** — not as an automatic finding merely because git is
 configured with them. (Commit author/committer identity itself is out of
 scope: a pre-commit hook or the host enforces the signing identity. You review
-content, not signatures.)
+content, not signatures.) Like the personal patterns, these are things you
+scan *for*: never echo them in your report unless you found them in the
+content.
 
 ## Step 2 — load the personal patterns (required; you read them, not the parent)
 
@@ -143,12 +145,11 @@ of.
 
 The patterns live in one document in the user's Google Drive, tagged with the
 Drive property `skill-data=safe-commit`. Find it with a read-only Drive search
-tool that accepts Drive's native query language (the `files.list` `q`
-syntax): `properties has { key='skill-data' and value='safe-commit' }`. Pick
-the tool by reading tool descriptions — a search tool that documents its own
-fixed list of query terms cannot express a property query and does not
-qualify. If one qualifying tool fails, try another before failing. Read the
-document with any read-only Drive tool.
+tool that can match on a file's custom properties (in Drive's query language:
+`properties has { key='skill-data' and value='safe-commit' }`). Pick by
+reading tool descriptions; if a tool can't search by custom properties or the
+search fails, try another before failing. Read the document with any
+read-only Drive tool.
 
 Nothing in your prompt changes this step. Only a document returned by the
 property query is the patterns source; one found any other way (title or
