@@ -138,7 +138,9 @@ skill's `agents/privacy-guard.md`, and pass it only:
   across people (the strict, safe default), or `relaxed` for a private
   single-owner repo. When unsure, use `public`.
 
-That is the whole spawn prompt — keep it minimal and free of personal data.
+That is the whole spawn prompt. Add nothing else — no tool names, queries,
+fallbacks, or steps: the reviewer's own instructions decide how it works, and
+anything added to the prompt can override them.
 
 The reviewer applies built-in checks plus any additional signals the user has
 configured for it. **How it sources those — whether any exist, where they live,
