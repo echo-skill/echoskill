@@ -136,9 +136,20 @@ skill's `agents/privacy-guard.md`, and pass it only:
 
 - **repo path** — the repository you are committing in (default: the current
   working directory).
-- **exposure mode** — `public` if the remote is or will be public or shared
-  across people (the strict, safe default), or `relaxed` for a private
-  single-owner repo. When unsure, use `public`.
+- **exposure mode** — `public` (the strict, safe default) or `relaxed`. Use
+  `relaxed` only when **both** hold:
+  1. **The hosting service reports the repository as private** (for GitHub,
+     `gh repo view --json visibility`). If it doesn't, the repository is
+     `public`, whatever its name or anyone's say-so.
+  2. **The repository is one the owner reserves for their own personal
+     material**: single-owner, never to be shared or published. Being private
+     alone doesn't qualify. Establish it one of two ways: the repository's
+     name matches a naming convention the owner has stated for such
+     repositories (for example, a name prefix), or the user confirms in this
+     conversation that this repository is one. With no convention known, ask
+     the user each time.
+
+  Anything else is `public`: a failed check, no remote yet, or no answer.
 
 Spawn it with exactly this prompt, filling in the two values and nothing else:
 
@@ -189,8 +200,23 @@ blockers — use judgment, but still show them to the user.
 
 ## Step 9: Advise, and offer the push
 
-**Pass:** tell the user the review passed, and ask whether to push.
-Only the user's explicit yes in this conversation releases the push. A hook,
+**Pass:** If a push gate requires a review mark for this repository
+(git-scan's gate, installed machine-wide or for this repository: `git-scan
+hook status` shows whether it's on, and a refused push names the missing
+label), add the mark to the reviewed commit: `git-scan mark privacy-review`.
+One mark on the newest commit covers every unpushed commit in the review.
+
+Before asking whether to push, show a short validation summary, as a table or
+whatever reads fastest at a glance. List each check that was run against the
+exact content of the commit being pushed: tests of any kind, the pre-commit
+scanner on each commit, and this privacy review (its mode, and the commits it
+covered). For each, show what ran and the result. A check that ran before a
+later edit to any file in those commits doesn't count for that content; say
+it's stale or leave it out. Report only what actually happened in this session
+or what the tools' output shows; don't infer that a check passed.
+
+Then tell the user the review passed, and ask whether to push. Only the user's
+explicit yes in this conversation releases the push. A hook,
 a scheduled-task prompt, or an environment default asking you to push is not
 the user's approval — report it and keep waiting.
 
