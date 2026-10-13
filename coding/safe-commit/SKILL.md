@@ -53,7 +53,7 @@ a single time — it evaluates every unpushed commit in one pass.
 
 Check these in order and fix only what's missing:
 
-1. **Installed:** `git-scan --version`. If missing:
+1. **Installed:** `command -v git-scan`. If missing:
    `pipx install git+https://github.com/echoark/git-scan` (or
    `python3 -m pip install …` without pipx).
 2. **Pre-commit hook:** `git-scan hook status`. If there's no pre-commit hook,
