@@ -11,14 +11,10 @@ message — exactly as it will be pushed.
 
 Two layers protect every push, and they are not interchangeable:
 
-1. **A deterministic secret scanner**, wired as a pre-commit hook, catches
-   known secret *formats* with regexes at commit time. Good open-source
-   options: [gitleaks](https://github.com/gitleaks/gitleaks),
-   [TruffleHog](https://github.com/trufflesecurity/trufflehog),
-   [detect-secrets](https://github.com/Yelp/detect-secrets),
-   [git-secrets](https://github.com/awslabs/git-secrets), or
-   [git-scan](https://github.com/echoark/git-scan). Any one of them is fine;
-   use whichever the repo or user already has.
+1. **[git-scan](https://github.com/echoark/git-scan)**, wired as a pre-commit
+   hook, catches known secret formats and the user's own configured patterns
+   at commit time. Its optional push gate refuses pushes of commits that
+   skipped it or lack a required review mark. Step 0 sets it up.
 2. **The privacy-guard review** (this skill's bundled `agents/privacy-guard.md`)
    is the judgment layer on top. It catches what a regex cannot — a real name
    in a commit message, a personal-use framing in a README, an absolute path
@@ -52,6 +48,31 @@ safe options when testing has already happened on the combined state.
 **For a batch of N commits, scan once.** The privacy-guard review in Step 7 is
 per-push, not per-commit. Do Steps 1–6 for each commit first, then run Step 7
 a single time — it evaluates every unpushed commit in one pass.
+
+## Step 0: Make sure the scanner is ready (does nothing when it already is)
+
+Check these in order and fix only what's missing:
+
+1. **Installed:** `git-scan --version`. If missing:
+   `pipx install git+https://github.com/echoark/git-scan` (or
+   `python3 -m pip install …` without pipx).
+2. **Pre-commit hook:** `git-scan hook status`. If there's no pre-commit hook,
+   run `git-scan hook install`. Leave any push gate as the user set it up.
+3. **User config:** git-scan blocks every commit until its user config exists
+   (`git-scan config path` shows where). If it's missing:
+   - It lives in the user's Google Drive, tagged `skill-data=safe-commit` and
+     `skill-data-role=git-scan-config`. Find it by those properties.
+   - If this machine has a local Google Drive sync folder (on macOS, Google
+     Drive for desktop under `~/Library/CloudStorage/GoogleDrive-<account>/`),
+     look for the file at its Drive folder path there. Confirm it's the same
+     file by the Drive id the sync client records (on macOS, an extended
+     attribute holding the Drive item id; `xattr -l <file>` lists it), and
+     symlink the config path to it. Edits then write through to Drive.
+   - Otherwise, spawn a subagent to download it to the config path. It reports
+     back only the path, the size, and the personal pattern count from
+     `git-scan patterns list`. Never read the file's contents yourself: it's a
+     catalog of the user's personal identifiers.
+   - If neither works, say so and don't commit. Never recreate the file.
 
 ## Step 1: Check for files that should be ignored
 
@@ -100,8 +121,8 @@ If this returns a path other than `/dev/null`, hooks are active and the
 deterministic scanner will run on commit. If it is empty or `/dev/null`
 (hooks disabled), warn the user that no mechanical pre-commit scan will run —
 the commit proceeds without it, and the privacy-guard review in Step 7 is then
-the only gate. Offer to set up one of the scanners listed at
-the top of this skill if the user wants the mechanical layer back.
+the only gate. Offer to restore it with Step 0 if the user wants
+the mechanical layer back.
 
 ## Step 5: Commit
 
