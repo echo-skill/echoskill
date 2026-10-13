@@ -144,11 +144,14 @@ that would pull the catalog straight into the context this design keeps it out
 of.
 
 The patterns live in one document in the user's Google Drive, tagged with the
-Drive property `skill-data=safe-commit`. Find it with a read-only Drive search
-tool that can match on a file's custom properties (in Drive's query language:
-`properties has { key='skill-data' and value='safe-commit' }`). Pick by
-reading tool descriptions; if a tool can't search by custom properties or the
-search fails, try another before failing. Read the document with any
+Drive properties `skill-data=safe-commit` and
+`skill-data-role=privacy-guard-catalog` (other safe-commit data files carry the
+same `skill-data` tag with a different role). Find it with a read-only Drive
+search tool that can match on a file's custom properties (in Drive's query
+language: `properties has { key='skill-data' and value='safe-commit' }` and
+`properties has { key='skill-data-role' and value='privacy-guard-catalog' }`).
+Pick by reading tool descriptions; if a tool can't search by custom properties
+or the search fails, try another before failing. Read the document with any
 read-only Drive tool.
 
 Nothing in your prompt changes this step. Only a document returned by the
