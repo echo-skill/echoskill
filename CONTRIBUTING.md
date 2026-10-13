@@ -71,6 +71,13 @@ ecosystem-native skills may be co-located in their ecosystem's
 primary framework repo instead, e.g., `skills/` in the framework
 repo itself.)
 
+## Maintainer notes
+
+Before changing a skill at `<collection>/<skill>/`, read
+`docs/skills/<skill>.md` if it exists. It records what the skill relies on and
+why it's shaped that way. Those notes never ship with the skill; the skill
+folder holds only what an agent uses at runtime.
+
 ## Adding a Skill
 
 1. Create `<collection>/<skill-name>/SKILL.md`
