@@ -12,7 +12,12 @@ would archive them:
 
 - Urgent action explicitly required by a real deadline
 - Security alerts (new sign-in, password reset, MFA changes)
-- Past-due notices, penalties, late fees
+- Past-due notices, penalties, late fees. The skill first checks
+  whether the payment was already made (a payment to the creditor, a
+  payment confirmation, later statements and notices); a notice the
+  evidence shows was resolved may be proposed for archive with that
+  evidence shown. Shutoff, collections, and legal-stage notices always
+  surface.
 - Failed / declined payments, insufficient-funds notices
 - A new account opened or credit line changed
 - Anything threatening loss of service, money, or access
