@@ -83,6 +83,22 @@ title, or path. The user may rename or move files freely.
 - **Migrating from a legacy key:** properties merge, so tag files with both the
   old and new keys, update the skill, then remove the old key.
 
+### Where files live
+
+Prefer one parent folder for all skill data, with one subfolder per skill, so
+a file is never loose where it could be deleted or edited by mistake. No
+storage UI shows properties, so a loose file looks like any other.
+
+| Folder | Key | Value |
+|---|---|---|
+| the parent of all skill data | `skill-data-role` | `root` |
+| one skill's folder, inside the parent | `skill-data-folder` | the skill's `name` |
+
+Placement is best effort. The property on the file is what finds it later, so
+a skill never fails, stops, or asks just because it can't reach, create, or
+tag a folder. Folders never carry `skill-data`, so a file query never returns
+a folder. `root` is reserved as a role.
+
 This is written against Google Drive custom file properties. For other
 providers, use the equivalent queryable metadata (e.g. OneDrive/SharePoint
 custom columns, Dropbox file properties/templates); if none exists, discover by
@@ -125,7 +141,9 @@ section, ask rather than create a new one.
    an empty store that looks like the real one is worse than stopping.
 4. When creating: build the file in the format the skill specifies, write its
    initial structure exactly as the skill defines it (column headers, JSON
-   skeleton, or document headings), tag it, and tell the user where it landed.
+   skeleton, or document headings), put it in the skill's data folder when
+   the tools allow (see "Where files live"), tag it, and tell the user where
+   it landed.
 
 ## Writing
 
@@ -225,7 +243,8 @@ Nothing of value from any session may be lost. The data store holds all
 records; this skill holds all process. Chat and agent memory are not storage.
 
 ## Locating the data
-<property query; fallback: ask, then tag; never scaffold over unfound data>
+<property query; fallback: ask, then tag; never scaffold over unfound data;
+new files go in the skill's data folder when the tools allow>
 
 ## Structure
 <each file: format and why, role, sections (tabs, headings, or keys),
