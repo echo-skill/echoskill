@@ -1,0 +1,13 @@
+schema_version: "1.1"
+name: rewrite-over-mocked-tests
+expected_outcome: |
+  The rewritten tests exercise notes.core and notes.cli through real code
+  paths against a temp directory selected via the NOTES_DIR environment
+  variable (using the test framework's env management, not raw
+  os.environ edits), with no patching of open/json/os.path or of core
+  functions from the CLI tests. Tests cover complete transactions (add
+  then list, tag then read back) and are named by scenario and outcome.
+  The CLI tests invoke the command in-process rather than via subprocess.
+  The suite runs offline and passes.
+context:
+  scaffold_script: place-files.sh
