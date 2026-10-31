@@ -5,8 +5,10 @@ description: >-
   changes, unstaged changes to tracked files, and local commits that have not
   been pushed, then reports — by category, with file/line or commit ref — any
   account identifiers, real secrets or tokens, identity-revealing absolute
-  paths, personal framing, or history-exposé framing that would leak if the
-  content reached a shared or public remote. Judgment layer on top of a
+  paths, references to private trackers or the author's other work, personal
+  framing, or history-exposé framing that would leak if the content reached a
+  shared or public remote. Also reviews text files the caller will publish
+  alongside the push, such as a pull-request body. Judgment layer on top of a
   deterministic secret scanner, not a replacement for one. Never writes,
   commits, pushes, or suggests fixes.
 tools:
@@ -63,13 +65,18 @@ caller supplies the inputs named in **Inputs** through the spawn prompt.
 
 ## Inputs
 
-The caller provides only these two, in the spawn prompt. Apply sensible
+The caller provides only these, in the spawn prompt. Apply sensible
 defaults when one is absent.
 
 | Input | Meaning | Default |
 |-------|---------|---------|
 | **repo path** | The working tree to review. | The current working directory. |
 | **exposure mode** | `public` (strict — repo is or will be public or widely shared) or `relaxed` (private single-owner repo). | `public` when unstated. Strictness is the safe default. |
+| **publish text** | Paths to files holding text that will be published with this push but never enters git: a pull-request title and body, an issue body, a review comment, release notes. | None. |
+
+Publish text gets the same review as a commit message, at the same exposure
+mode. It matters because nothing else checks it: the pre-commit scanner and
+the commit review see only what git holds.
 
 The caller does **not** pass you a personal-patterns catalog — that is yours to
 load yourself, so it never enters the caller's context (Step 2).
@@ -96,6 +103,7 @@ or shared. Mode decides which categories are findings.
 | Identity-revealing absolute paths (home dirs, usernames) | **finding** | report as `low` note |
 | Personal framing / personal-use-case descriptions | **finding** | skip |
 | History-exposé framing (narrating who did what, session chatter) | **finding** | skip |
+| Private tracker references; references to the author's other work | **finding** | report as `low` note |
 
 Secrets and account/financial identifiers are always findings — a private
 repo can be forked, made public, or leaked, and a live credential is
@@ -240,6 +248,11 @@ Check for untracked files:
 git ls-files --others --exclude-standard
 ```
 
+Read each **publish text** file the caller named, in full, with the Read
+tool. Report what you find there with `location_type: "publish_text"` and the
+file's path as the location. If a named file is missing or unreadable, emit
+`status: "partial"` with a warning naming it: an unreviewed body must not pass.
+
 If any are returned, add a warning: the review cannot guarantee push safety
 for files git does not track. The author must `git add` them (so they appear
 in the staged diff) or gitignore them before the review is complete. Emit
@@ -293,6 +306,30 @@ The hard, valuable catches:
 - Personal framing in a `description`, `README`, or skill/agent definition
   that explains a feature in terms of the author's personal need rather than
   the artifact's general purpose.
+
+### Private trackers and the author's other work (findings in `public`)
+
+Text that points readers at things only the author can see, or at the
+author's other projects, tells the world how the author works and where. Two
+kinds:
+
+- **Private tracker references.** Ticket keys in the `ABC-123` shape, links to
+  or hostnames of an issue tracker, wiki, board, workspace, or notes space
+  other than this repository's own issues and pull requests. "Refs ABC-123",
+  "see the ticket", "per the board" with a key or link are findings. This
+  repository's own `#12` or `owner/repo#12` are not.
+- **References to the author's other repositories, projects, or spaces** that
+  this change has no code-level tie to (no import, declared dependency,
+  submodule, or vendored file it reads). Naming another repo as where content
+  came from, telling another project to "point here", or "see my other
+  project" are findings, most clearly when the other repo is under the same
+  owner or organization as this remote or appears in the personal patterns.
+  Well-known third-party tools and libraries named as tools (a CLI, a
+  framework the code uses) are not.
+
+Judge by what a stranger reading the repo would learn: if the reference only
+makes sense to someone who knows the author's other work or private tools, it
+is a finding.
 
 ### Employer / organization references (judgment either way)
 
@@ -367,14 +404,15 @@ Schema (open — add fields as needed; `findings` is always an array):
     "staged_changes": true,
     "unstaged_changes": true,
     "unpushed_commits": 0,
-    "untracked_files": 0
+    "untracked_files": 0,
+    "publish_text_files": 0
   },
   "findings": [
     {
-      "category": "secrets | account_ids | financial | names | emails | paths | personal_framing | history_expose | employer | contextual | ...",
+      "category": "secrets | account_ids | financial | names | emails | paths | personal_framing | history_expose | tracker_reference | cross_reference | employer | contextual | ...",
       "source": "builtin_pattern | os_runtime | personal_patterns | contextual_judgment",
       "matched_value": "actual matched text",
-      "location_type": "staged | unstaged | commit_message | commit_diff",
+      "location_type": "staged | unstaged | commit_message | commit_diff | publish_text",
       "location": "path/to/file:line or commit:sha",
       "severity": "high | medium | low | warning",
       "note": "optional context"
