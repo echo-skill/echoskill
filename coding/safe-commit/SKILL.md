@@ -296,6 +296,6 @@ again and what to do if the review then finds something.
 
 | File | When to read it |
 |------|-----------------|
-| `agents/privacy-guard.md` | The adversarial privacy reviewer. Spawn it (or follow it) at Step 7. It owns the personal-patterns source — where it lives, its format, and the rule that the reviewer, not the parent, reads it. |
+| `agents/privacy-guard.md` | The adversarial privacy reviewer. Spawn it (or follow it) at Step 7. It reads the personal patterns and notes from git-scan's configuration itself, so the parent never loads them. |
 | `references/commit-splitting.md` | Full reasoning behind the four splitting rules and the safe options when a tested combined state must be split. |
 | `references/post-push-rescan.md` | Retroactively review commits that were pushed without one. |

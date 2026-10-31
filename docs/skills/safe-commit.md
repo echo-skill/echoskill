@@ -9,14 +9,26 @@ folder holds only what an agent uses at runtime.
 | Part | Owner | Role |
 |---|---|---|
 | git-scan | echoark/git-scan | Pre-commit scan against the user's patterns; optional push gate that refuses commits lacking required marks |
-| git-scan user config | the user's Google Drive | Patterns, allowed emails, identity rules, required marks |
-| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent |
-| privacy-guard catalog | the user's Google Drive | The reviewer's personal patterns |
+| git-scan user config | the user's Google Drive | Patterns (scanned and judgment-only, each with its note), notes, allowed emails, identity rules, required marks |
+| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent; reads its patterns and notes from git-scan's configuration (`git-scan patterns list --json`, git-scan 0.7 or later) |
 | safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, mark, push |
 
-Both Drive files carry `skill-data=safe-commit`, and each carries a
-`skill-data-role` (`git-scan-config`, `privacy-guard-catalog`). Lookups use
-both properties, so each finds exactly one file.
+The Drive file carries `skill-data=safe-commit` and
+`skill-data-role=git-scan-config`. Lookups use both properties, so they find
+exactly one file.
+
+## One catalog
+
+The scanner and the reviewer read one list. git-scan's configuration holds
+the regex entries the scanner compiles and, as judgment entries, the values
+that would block ordinary commits as a regex but are sensitive in context
+(a city, a given name that is also a word, the last four digits of an
+account); each entry can carry a note, and a `notes` list holds guidance
+that belongs to no entry. privacy-guard loads all of it with one command and
+never sees a second file. A separate reviewer catalog would drift from the
+scanner's list, and did; the one-list design is why an entry that trips
+the scanner is moved to judgment (`git-scan patterns edit ID --judgment`)
+rather than removed.
 
 ## Scanner setup
 

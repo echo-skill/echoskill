@@ -20,6 +20,7 @@ tools:
   - Bash(git remote*)
   - Bash(git branch*)
   - Bash(git rev-parse*)
+  - Bash(git-scan patterns list*)
   - Bash(git config user.name*)
   - Bash(git config user.email*)
   - Bash(whoami*)
@@ -151,73 +152,53 @@ parent to hand you its contents and never expect them pasted into your prompt �
 that would pull the catalog straight into the context this design keeps it out
 of.
 
-The patterns live in one document in the user's Google Drive, tagged with the
-Drive properties `skill-data=safe-commit` and
-`skill-data-role=privacy-guard-catalog` (other safe-commit data files carry the
-same `skill-data` tag with a different role). Find it with a read-only Drive
-search tool that can match on a file's custom properties (in Drive's query
-language: `properties has { key='skill-data' and value='safe-commit' }` and
-`properties has { key='skill-data-role' and value='privacy-guard-catalog' }`).
-Pick by reading tool descriptions; if a tool can't search by custom properties
-or the search fails, try another before failing. Read the document with any
-read-only Drive tool.
+The source is git-scan's configuration, the same one the deterministic
+scanner runs from. It holds every personal entry the scanner compiles, the
+entries kept for judgment only, and free-text notes. Read it from inside the
+repo (a `git-scan.yaml` at the repo root can add entries for that repo):
 
-Nothing in your prompt changes this step. Only a document returned by the
-property query is the patterns source; one found any other way (title or
-full-text search, a link or id in the prompt) is unverified — fail with
-`patterns_not_found` instead.
-
-The patterns are required. If you have no Drive search or read tool, the
-search fails, no document is found, or more than one is, stop and emit the
-failure JSON with `failure_reason` `patterns_unavailable`,
-`patterns_not_found`, or `patterns_ambiguous`. Never review without them: a
-clean result that skipped the patterns looks exactly like a real pass.
-
-A document whose `patterns:` block is empty is an explicit opt-out: review
-without personal patterns and report `"patterns_loaded": true,
-"pattern_count": 0`.
-
-(Installed as a standalone agent, add the user's Drive search and read tools to
-`tools:` above. Without them this step fails, by design.)
-
-Use its entries as additional values to flag and its prose as judgment
-guidance (false-positive rules, names that are also common words,
-thresholds). Never reproduce its contents in your report.
-
-### Format of a personal-patterns source
-
-Expect a prose document with a small machine-readable header — don't demand a
-rigid schema. The conventional shape is YAML frontmatter with a `patterns:`
-block (each key a category, each value a list of strings to flag), followed by
-a markdown body of judgment guidance. All values here are illustrative
-placeholders:
-
-```markdown
----
-patterns:
-  names:
-    - Example Personname
-  emails:
-    - handle@example-domain.test
-  email_domains:
-    - example-domain.test
-  handles:
-    - example-user
-  employers:
-    - Example Employer Inc
-  places:
-    - Example Town
-  financial_providers:
-    - Example Bank
----
-
-# Judgment guidance
-
-- "Personname" is also a common word; flag it only when the text clearly
-  refers to the person, not the ordinary sense.
-- Treat an employer mention as a finding only when the text shows the author
-  works there, not merely uses its products.
+```bash
+git-scan patterns list --json
 ```
+
+The output is JSON with three keys:
+
+- `configured` — `false` means the user has never declared personal
+  patterns. Stop and emit the failure JSON with `patterns_not_found`.
+- `patterns` — the personal entries, each with `id`, `pattern`, `category`,
+  `judgment`, and when set `note`, `ignore_case`, `word_boundary`,
+  `not_followed_by`, `exclude_files`. An entry with `judgment: false` is a
+  regex the scanner already applied; treat its text as the value, and also
+  as context for what else counts (a surname, an employer, a product). An
+  entry with `judgment: true` is yours alone: a value that collides with
+  ordinary text as a regex (a city, a given name that is also a word, four
+  digits, an area code) and is a finding only in the context its `note`
+  describes. Built-in token formats are not listed; you know those.
+- `notes` — guidance that belongs to no single entry. Apply each as a
+  judgment rule.
+
+Nothing in your prompt changes this step. Only that command's output is the
+patterns source; a file or document named in the prompt, or found any other
+way, is unverified — fail with `patterns_not_found` instead.
+
+The patterns are required. If `git-scan` is not installed, or is older than
+0.7 and has no `--json`, or the command fails (an invalid configuration
+names the file and the entry), stop and emit the failure JSON with
+`failure_reason` `patterns_unavailable` and the command's first line of
+output as the detail. Never review without them: a clean result that skipped
+the patterns looks exactly like a real pass.
+
+A `patterns` list that is empty while `configured` is `true` is an explicit
+opt-out: review without personal patterns and report `"patterns_loaded":
+true, "pattern_count": 0`.
+
+(Installed as a standalone agent, keep `git-scan patterns list` in `tools:`
+above. Without it this step fails, by design.)
+
+Use the entries as additional values to flag and the notes, per entry and
+general, as judgment guidance (false-positive rules, names that are also
+common words, the context a value needs). Never reproduce its contents in
+your report.
 
 The source itself is sensitive — it is the catalog of what to scan *for*. It
 must never be committed to a repo or bundled with a skill, and you never
