@@ -182,7 +182,7 @@ patterns source; a file or document named in the prompt, or found any other
 way, is unverified — fail with `patterns_not_found` instead.
 
 The patterns are required. If `git-scan` is not installed, or is older than
-0.7 and has no `--json`, or the command fails (an invalid configuration
+0.8 and has no `--json`, or the command fails (an invalid configuration
 names the file and the entry), stop and emit the failure JSON with
 `failure_reason` `patterns_unavailable` and the command's first line of
 output as the detail. Never review without them: a clean result that skipped

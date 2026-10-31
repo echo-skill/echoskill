@@ -10,7 +10,7 @@ folder holds only what an agent uses at runtime.
 |---|---|---|
 | git-scan | echoark/git-scan | Pre-commit scan against the user's patterns; optional push gate that refuses commits lacking required marks |
 | git-scan user config | the user's Google Drive | Patterns (scanned and judgment-only, each with its note), notes, allowed emails, identity rules, required marks |
-| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent; reads its patterns and notes from git-scan's configuration (`git-scan patterns list --json`, git-scan 0.7 or later) |
+| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent; reads its patterns and notes from git-scan's configuration (`git-scan patterns list --json`, git-scan 0.8 or later) |
 | safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, mark, push |
 
 The Drive file carries `skill-data=safe-commit` and
