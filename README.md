@@ -59,7 +59,7 @@ Development workflow skills.
 |-------|-------------|
 | [sociable-unit-tests](coding/sociable-unit-tests/SKILL.md) | Sociable unit testing with dir isolation and no mocks |
 | [setup-agent-context](coding/setup-agent-context/SKILL.md) | Configure CLAUDE.md and .gemini/settings.json for a repo |
-| [author-github-issue](coding/author-github-issue/SKILL.md) | Structured GitHub issue authoring with privacy rules |
+| [author-github-issue](coding/author-github-issue/SKILL.md) | Structured authoring of GitHub issues and pull requests, with privacy rules and a scan before posting |
 | [code-reuse](coding/code-reuse/SKILL.md) | Find and reuse existing code patterns |
 | [workspace-status](coding/workspace-status/SKILL.md) | Check workspace state across repos |
 | [prioritize-github-issues](coding/prioritize-github-issues/SKILL.md) | Scan and rank issues across all repos/orgs by priority labels |
@@ -69,7 +69,7 @@ Development workflow skills.
 | [agent-author](coding/agent-author/SKILL.md) | Create, configure, and publish agent and subagent definitions |
 | [project-docs](coding/project-docs/SKILL.md) | Keep README, CONTRIBUTING, and docs/ content in the right place without losing any |
 | [check-feature-support](coding/check-feature-support/SKILL.md) | Verify a feature, flag, or config key is actually supported before relying on it |
-| [safe-commit](coding/safe-commit/SKILL.md) | Stage, review, privacy-scan, and commit; push only on a clean review |
+| [safe-commit](coding/safe-commit/SKILL.md) | Stage, review, privacy-scan, and commit; push or open a PR only on a clean review |
 | [plugin-installer](coding/plugin-installer/SKILL.md) | Install, update, or reinstall a Claude Code plugin from a marketplace |
 | [product-branding](coding/product-branding/SKILL.md) | Name products and check availability across domains, GitHub, and package registries |
 

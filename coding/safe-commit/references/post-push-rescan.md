@@ -29,7 +29,7 @@ git merge <your-branch>
 
 ## Run the review
 
-Run the privacy-guard review (skill Step 7) against this repo while
+Run the privacy-guard review (skill Step 8) against this repo while
 `rescan-basis` is checked out. Keep the exposure mode matched to the remote
 the content was pushed to — `public` for a public or shared remote. The review
 reads the commits that are now ahead of `rescan-basis`'s upstream.

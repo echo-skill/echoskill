@@ -63,6 +63,50 @@ as private, and the repository is one the owner reserves for personal material
 `public`. Privacy alone is not enough because private repositories are often
 shared or published later.
 
+## Landing routes and PR text
+
+The skill asks where the commit lands (direct to the default branch, or a
+branch and a pull request) before the commit, not after.
+
+- **The branch name is scanned at commit time.** git-scan's pre-commit pass
+  checks branch names along with the content; a branch created after the
+  commit would skip that check.
+- **No pointer moves.** Committing on the right branch from the start means
+  no later `git branch -f` or reset to relocate a reviewed SHA, and the mark
+  on that SHA is the one the push gate sees.
+- **Follow-ups have a home.** A fix after review goes on the same branch and
+  into the same PR, instead of landing on the default branch by accident.
+
+PR text is scanned and reviewed because, until this route existed, it was the
+one thing that reached the remote through no check at all: commit messages go
+through the commit-msg hook and privacy-guard, branch names through the
+pre-commit pass, but a PR title, body or comment posted straight from the
+agent's context was unscanned. A PR body is as permanent as the commits it
+merges, its edit history stays visible on a public repository, and the
+original text has already gone out by notification email before any edit. So
+the text is written to a file, scanned by the deterministic scanner
+(`git-scan run --message <file>`), reviewed by privacy-guard as an artifact
+file, posted verbatim, and read back.
+
+The file lives under `.git/` (`"$(git rev-parse --git-dir)/safe-commit/`)
+because that directory is never tracked and needs no ignore rule, is inside
+the repository so a reviewer subagent can read it without a path approval, and
+resolves correctly in a linked worktree. `gh` keeps its own draft at
+`.git/PULLREQ_EDITMSG` for the same reasons. The file is deleted once the
+posted text has been read back and compared.
+
+- **Connector footers.** Some agent connectors append an attribution line
+  with a session link when they create a PR, an issue, or a comment, and
+  GitHub keeps the created text in the item's edit history. The route
+  therefore allows only tools that post the file as-is (`gh ... --body-file`)
+  on a public or restricted repo, and otherwise hands the user the file and
+  the command. Observed before the rule existed; a body corrected by update
+  still carries the first revision until a repo admin deletes it.
+- **Delegated agents.** A subagent usually cannot spawn agents, so it must not
+  take the in-process fallback and read the catalog itself; it stops after
+  the commit and the caller runs the review. That is what makes a delegated
+  run a two-phase handoff.
+
 ## Before the push
 
 The validation summary lists only checks that ran against the exact content

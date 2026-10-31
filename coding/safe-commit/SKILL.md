@@ -1,6 +1,6 @@
 ---
 name: safe-commit
-description: Stage, review, privacy-scan, and commit changes safely, then push only if the scan comes back clean. Use whenever committing or pushing code in any form — "commit", "git commit", "push", "git push", "stage and commit", "commit this", "commit all", "commit and push", "safe commit", "ready to commit", "let's commit", "save my work" — and whenever you are about to commit on the user's behalf after finishing a task. Enforces commit-first-then-scan discipline, honest commit splitting (whole-file boundaries, never hunk surgery or stash tricks), and an adversarial privacy review of staged changes and unpushed commits that blocks the push when it finds account identifiers, secrets, tokens, personal framing, or identity-revealing paths before they reach a shared or public remote.
+description: Stage, review, privacy-scan, and commit changes safely, then push or open a pull request only if the scan comes back clean. Use whenever committing or pushing code in any form — "commit", "git commit", "push", "git push", "stage and commit", "commit this", "commit all", "commit and push", "safe commit", "ready to commit", "let's commit", "save my work", "open a pull request", "raise a PR", "create a PR" — and whenever you are about to commit on the user's behalf after finishing a task. Enforces commit-first-then-scan discipline, honest commit splitting (whole-file boundaries, never hunk surgery or stash tricks), and an adversarial privacy review of staged changes and unpushed commits that blocks the push when it finds account identifiers, secrets, tokens, personal framing, or identity-revealing paths before they reach a shared or public remote.
 ---
 
 # Safe Commit
@@ -46,8 +46,8 @@ When a split would violate these, the honest answer is almost always to commit
 together. Read `references/commit-splitting.md` for the full reasoning and the
 safe options when testing has already happened on the combined state.
 
-**For a batch of N commits, scan once.** The privacy-guard review in Step 7 is
-per-push, not per-commit. Do Steps 1–6 for each commit first, then run Step 7
+**For a batch of N commits, scan once.** The privacy-guard review in Step 8 is
+per-push, not per-commit. Do Steps 1–7 for each commit first, then run Step 8
 a single time — it evaluates every unpushed commit in one pass.
 
 ## Make sure the scanner is ready (does nothing when it already is)
@@ -121,11 +121,23 @@ git config core.hooksPath
 If this returns a path other than `/dev/null`, hooks are active and the
 deterministic scanner will run on commit. If it is empty or `/dev/null`
 (hooks disabled), warn the user that no mechanical pre-commit scan will run —
-the commit proceeds without it, and the privacy-guard review in Step 7 is then
+the commit proceeds without it, and the privacy-guard review in Step 8 is then
 the only gate. Offer to restore it as in "Make sure the scanner is ready" if
 the user wants the mechanical layer back.
 
-## Step 5: Commit
+## Step 5: Choose where it lands
+
+Once per session, ask: "Direct to `<default branch>`, or a branch and a pull
+request?" and remember the answer for the rest of the session. If the repo's
+CONTRIBUTING states a convention, follow it and skip the question. For a PR:
+`git fetch origin <default>` and `git switch -c <prefix>/<slug>` from it before
+committing; the branch name is held to the same content rules as a commit
+message (the pre-commit pass scans branch names). Staged changes carry across
+the switch. When this skill runs unattended (an agent working from a ticket,
+nobody to ask), the caller's brief states the route; a brief that states none
+means direct.
+
+## Step 6: Commit
 
 If the user didn't give a message, draft one: summarize the nature of the
 change (feature, fix, refactor), focus on the "why" over the "what", keep it to
@@ -140,7 +152,7 @@ git commit -m "<message>"
 If the pre-commit hook fails, read its findings, fix the issues, and retry. Do
 **not** use `--no-verify` unless the user explicitly approves it.
 
-## Step 6: Verify a clean working tree
+## Step 7: Verify a clean working tree
 
 ```bash
 git status
@@ -149,12 +161,12 @@ git status
 Confirm the working tree is clean and only unpushed commits remain. If
 anything is still dirty or untracked that matters, go back to Step 1.
 
-## Step 7: Run the privacy-guard review
+## Step 8: Run the privacy-guard review
 
 Run this **once per push**, after all commits in the batch are made.
 
 Spawn a **read-only subagent** whose instructions are the contents of this
-skill's `agents/privacy-guard.md`, and pass it only:
+skill's `agents/privacy-guard.md`, and pass it only these inputs:
 
 - **repo path** — the repository you are committing in (default: the current
   working directory).
@@ -178,6 +190,11 @@ Spawn it with exactly this prompt, filling in the two values and nothing else:
     Read <this skill's directory>/agents/privacy-guard.md and follow it
     exactly as your instructions. Repo path: <repo path>. Exposure mode:
     <public or relaxed>.
+
+The reviewer takes one optional third input, **artifact files** — text that
+will be published as-is outside the repo (a PR title and body, an issue body,
+a comment). Only `references/pr-route.md` and the `author-github-issue` skill
+use it; they append `Artifact files: <paths>.` to the same prompt.
 
 You don't need to read that file yourself, and don't add to the prompt — the
 reviewer's instructions decide how it works.
@@ -204,8 +221,13 @@ How you spawn it depends on the agent platform:
   and carry out its procedure against the repo, producing the same report and
   `privacy-guard-result` JSON. You lose the isolation a separate agent gives,
   but the review still happens. Never skip it.
+- **An agent running on behalf of another agent does not take that fallback.**
+  Delegated agents usually cannot spawn agents of their own, and the one that
+  just wrote the change must not be the one that loads the catalog. Stop after
+  the commit, report the scan result and the SHA, and hand the review to the
+  caller, which runs it and finishes the landing.
 
-## Step 8: Interpret the result
+## Step 9: Interpret the result
 
 Parse the `privacy-guard-result` JSON. The gate is binary:
 
@@ -220,7 +242,7 @@ There is no partial pass. The content at this commit either passes or it
 doesn't. In `relaxed` mode, low-severity name/path notes are awareness, not
 blockers — use judgment, but still show them to the user.
 
-## Step 9: Advise, and offer the push
+## Step 10: Advise, and offer the push
 
 **Pass:** If a push gate requires a review mark for this repository
 (git-scan's gate, installed machine-wide or for this repository: `git-scan
@@ -250,10 +272,18 @@ it (placeholders, generic framing); if genuinely wrong, the user can run the
 review in `relaxed` mode where appropriate, or refine their personal-patterns
 file.
 
-## Step 10: Push the reviewed commit
+## Step 11: Land the reviewed commit
 
-Push the exact SHA that was reviewed, not `HEAD` — this prevents a race where
-`HEAD` moves between the review and the push:
+Nothing is pushed to any ref, the default branch or a feature branch, unless
+every check is completely clean: every scanner check PASS on every commit in
+the batch, and the privacy review `status: completed` with empty `findings`.
+A warning in the review result is shown to the user and the push waits for
+their explicit yes. Marks live on the commit SHA: landing the same SHA
+anywhere keeps them; an amend or rebase makes a new SHA and the review runs
+again.
+
+**Direct:** push the exact SHA that was reviewed, not `HEAD` — this prevents a
+race where `HEAD` moves between the review and the push:
 
 ```bash
 sha=$(git rev-parse HEAD)
@@ -262,6 +292,8 @@ git push origin "$sha:refs/heads/$(git symbolic-ref --short HEAD)"
 
 If the user pushes themselves, give them that exact command instead of
 running it.
+
+**Pull request:** follow `references/pr-route.md`.
 
 ## If content was pushed without a review
 
@@ -274,6 +306,7 @@ again and what to do if the review then finds something.
 
 | File | When to read it |
 |------|-----------------|
-| `agents/privacy-guard.md` | The adversarial privacy reviewer. Spawn it (or follow it) at Step 7. It owns the personal-patterns source — where it lives, its format, and the rule that the reviewer, not the parent, reads it. |
+| `agents/privacy-guard.md` | The adversarial privacy reviewer. Spawn it (or follow it) at Step 8. It owns the personal-patterns source — where it lives, its format, and the rule that the reviewer, not the parent, reads it. |
 | `references/commit-splitting.md` | Full reasoning behind the four splitting rules and the safe options when a tested combined state must be split. |
+| `references/pr-route.md` | Land the reviewed commit on a branch and open a pull request; the PR text goes through the same scan and review. |
 | `references/post-push-rescan.md` | Retroactively review commits that were pushed without one. |

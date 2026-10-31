@@ -63,13 +63,19 @@ caller supplies the inputs named in **Inputs** through the spawn prompt.
 
 ## Inputs
 
-The caller provides only these two, in the spawn prompt. Apply sensible
-defaults when one is absent.
+The caller provides only these, in the spawn prompt. Apply sensible defaults
+when one is absent.
 
 | Input | Meaning | Default |
 |-------|---------|---------|
 | **repo path** | The working tree to review. | The current working directory. |
 | **exposure mode** | `public` (strict — repo is or will be public or widely shared) or `relaxed` (private single-owner repo). | `public` when unstated. Strictness is the safe default. |
+| **artifact files** (optional) | Paths to text that will be published as-is outside the repo: a PR title and body, an issue body, a comment. | None. |
+
+Artifact files are reviewed as published artifacts under the same exposure
+mode: personal framing, use-case narration, identifiers, paths, tracker keys
+or links, history-exposé and agent attribution are findings in `public`;
+secrets and account identifiers are findings in either mode.
 
 The caller does **not** pass you a personal-patterns catalog — that is yours to
 load yourself, so it never enters the caller's context (Step 2).
@@ -245,6 +251,9 @@ for files git does not track. The author must `git add` them (so they appear
 in the staged diff) or gitignore them before the review is complete. Emit
 `status: "partial"` when untracked files remain.
 
+When **artifact files** were given, read each one in full with `Read`. A
+finding in one cites the file path and line (`location_type: "artifact"`).
+
 ## What to look for
 
 A deterministic scanner flags `ghp_...` as a token — that is the easy part,
@@ -367,14 +376,15 @@ Schema (open — add fields as needed; `findings` is always an array):
     "staged_changes": true,
     "unstaged_changes": true,
     "unpushed_commits": 0,
-    "untracked_files": 0
+    "untracked_files": 0,
+    "artifact_files": 0
   },
   "findings": [
     {
       "category": "secrets | account_ids | financial | names | emails | paths | personal_framing | history_expose | employer | contextual | ...",
       "source": "builtin_pattern | os_runtime | personal_patterns | contextual_judgment",
       "matched_value": "actual matched text",
-      "location_type": "staged | unstaged | commit_message | commit_diff",
+      "location_type": "staged | unstaged | commit_message | commit_diff | artifact",
       "location": "path/to/file:line or commit:sha",
       "severity": "high | medium | low | warning",
       "note": "optional context"

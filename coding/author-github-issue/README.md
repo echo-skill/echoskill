@@ -1,8 +1,8 @@
 # author-github-issue
 
-Your agent files GitHub issues — but does it follow your team's conventions, avoid leaking PII, and write issues that someone else can actually pick up? This skill enforces structured authoring: temp file workflow, privacy rules, and self-contained issue bodies that don't assume conversation context.
+Your agent files GitHub issues and opens pull requests — but does it follow your team's conventions, avoid leaking PII, and write text that someone else can actually pick up? This skill enforces structured authoring: a file-based workflow, privacy rules, a scan and review of the text before it is posted, and self-contained bodies that don't assume conversation context. The same rules cover a pull request's title, body, and comments.
 
-Activates automatically whenever the agent creates, edits, or comments on a GitHub issue.
+Activates automatically whenever the agent creates, edits, or comments on a GitHub issue or pull request.
 
 Cross-platform — works with any AI agent that supports the SKILL.md format.
 
