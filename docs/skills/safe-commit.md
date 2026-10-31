@@ -87,14 +87,22 @@ before the push adds a round trip without adding a check. Any finding,
 warning beyond a missing upstream, or oddity about the change falls back to
 asking.
 
+## Landing choice
+
+The route (direct, or a branch and a pull request) is chosen before the
+commit, not at push time: the branch name is scanned at commit time like
+everything else, no branch pointer has to move after the fact, and the
+pull-request text has a place to be written before the review runs.
+
 ## Text outside git
 
 A pull-request body, issue, or comment never enters git, so the pre-commit
 scanner and the commit review never see it, yet it is as public as the
 commits. The skill writes that text to files and passes them to `git-scan
-review --publish`, and posts exactly what was reviewed. git-scan's reviewer
-treats two things as findings there and in commits that a secret scanner
-can't catch: references to a private tracker (ticket keys, tracker links),
+review --publish`, posts exactly what was reviewed, and reads the posted text
+back. The files live under the git directory, so they are never tracked and
+need no ignore rule. git-scan's reviewer treats two things as findings there
+and in commits that a secret scanner can't catch: references to a private tracker (ticket keys, tracker links),
 and references to the author's other repositories or spaces that the change
 doesn't depend on in code.
 

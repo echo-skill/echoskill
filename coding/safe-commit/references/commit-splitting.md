@@ -72,7 +72,7 @@ someone could have had.
 ## The review is per-push, not per-commit
 
 When committing a batch of N commits, do all N commits first (each through the
-skill's Steps 1–6), then run `git-scan review` once at the end. It reads the
+skill's Steps 1–7), then run `git-scan review` once at the end. It reads the
 content of every unpushed commit in a single run — one invocation covers the
 whole batch. Running it per commit is wasted effort and gives the review a
 partial view of what will actually be pushed.
