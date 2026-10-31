@@ -72,7 +72,7 @@ someone could have had.
 ## The scan is per-push, not per-commit
 
 When committing a batch of N commits, do all N commits first (each through the
-skill's Steps 1–6), then run the privacy-guard review once at the end. The
+skill's Steps 1–7), then run the privacy-guard review once at the end. The
 review evaluates the content of every unpushed commit in a single pass — one
 invocation covers the whole batch. Running it per commit is wasted effort and
 gives the review a partial view of what will actually be pushed.
