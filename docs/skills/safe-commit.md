@@ -8,52 +8,62 @@ folder holds only what an agent uses at runtime.
 
 | Part | Owner | Role |
 |---|---|---|
-| git-scan | echoark/git-scan | Pre-commit scan against the user's patterns; optional push gate that refuses commits lacking required marks |
-| git-scan user config | the user's Google Drive | Patterns, allowed emails, identity rules, required marks |
-| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent |
-| privacy-guard catalog | the user's Google Drive | The reviewer's personal patterns |
-| safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, mark, push |
+| git-scan | echoark/git-scan | The scan (hooks), judgment matches to acknowledge, the privacy review it runs itself, and the push gate that requires both |
+| git-scan user config | the user's own storage; the user's setup says where | Patterns (scanned and judgment-only, each with its note), notes, allowed emails, identity rules, the review requirement, the reviewer runner |
+| safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, push |
 
-Both Drive files carry `skill-data=safe-commit`, and each carries a
-`skill-data-role` (`git-scan-config`, `privacy-guard-catalog`). Lookups use
-both properties, so each finds exactly one file.
+This skill knows nothing about git-scan's configuration: not where it
+lives, not what is in it, not how the reviewer reads it. That is deliberate.
+Everything the skill needs from git-scan arrives as a verdict or a refusal
+that says what to do next, and the one place the skill touches setup, the
+"scanner is ready" section, tells the agent to follow git-scan's own
+missing-configuration message. The text of that message is the user's, set
+when git-scan is installed on the machine (`hook install
+--missing-config-help`), so the user-specific part (where their
+configuration is kept, how it is restored) lives in the user's environment,
+never in this public skill.
 
 ## Scanner setup
 
 The setup section runs before anything else and changes nothing when git-scan,
-its hook and its config are already in place.
+its hooks and its configuration are already in place.
 
-- **The config comes from Drive.** It is the user's own data, reachable from
-  every surface the skill runs on (a workstation, a cloud session) through the
-  account's Drive connector, with no repository to attach and no credential to
-  manage.
-- **On a machine with a local Drive sync folder,** the config path is a symlink
-  to the synced copy, confirmed by the sync client's file id. git-scan writes
-  its config in place, so edits made with its CLI go through the link to Drive,
-  and Drive keeps the file's revision history.
-- **Elsewhere, a subagent downloads it.** The config is a catalog of the user's
-  personal identifiers, so it stays out of the parent agent's context: the
-  subagent reports back only the path, the size and the pattern count.
-- **Without a config, git-scan refuses every commit.** Its refusal text can be
-  replaced at install time (`git-scan hook install --missing-config-help`).
-  Setting it to point at this skill is what brings an agent here when it tries
-  a plain `git commit` first.
+- **Without a configuration, git-scan refuses every commit.** Its refusal
+  text is replaced at install time with whatever the user's environment
+  needs (`git-scan hook install --missing-config-help`). That text, not this
+  skill, says how the configuration is restored; the skill says to follow it
+  exactly and never to improvise one.
 
-## The push gate and the review mark
+## The review and the push gate
 
-git-scan's push gate refuses any outgoing commit that lacks its own `scanned`
-mark or a mark the user requires. This skill adds `privacy-review` after a
-clean review (`git-scan mark privacy-review`), so the gate refuses pushes that
-skipped the review.
+`git-scan review` runs the reviewer itself: it builds the prompt from its
+own packaged instructions, the user's configuration, the unpushed commits
+and the publish text, runs a headless agent CLI with no tools, validates the
+result and records a clean one per commit. The push gate requires that
+record on every outgoing commit when the configuration says so.
 
-- One mark on the newest commit covers every unpushed commit in the review,
-  matching how privacy-guard reviews the whole unpushed range.
-- An amended or rebased commit is a new commit and needs a new review.
-- The mark records that the review step ran, not how well; the gate catches a
-  forgotten review.
-- Coverage is computed against the remote being pushed to. A repository with
-  several remotes can push commits that were reviewed relative to a different
-  one.
+- The agent runs one command and reads a verdict. It never holds the
+  reviewer's result and there is no command that accepts one, so the only
+  writer of the record is git-scan after it has run the review. The old
+  flow, where the agent spawned a reviewer and then marked the commit with a
+  documented command that took any label, was the bypass with instructions
+  attached; this skill no longer carries a reviewer definition at all.
+- An amended or rebased commit is a new commit and is reviewed again;
+  commits already reviewed are skipped on a rerun.
+- A reviewer problem (runner missing, failed, timed out, unreadable
+  output) is reported as such and records nothing. The skill treats it as a
+  blocked push, never as a pass.
+- Coverage is computed against the remote being pushed to.
+
+## Judgment matches at commit time
+
+A judgment entry in git-scan's configuration names a value that is
+sensitive only in context. The scan lists each match with the entry's note
+and refuses the commit until the agent has looked and run `git-scan ack`,
+which applies to exactly the staged content. The acknowledgement clears
+judgment matches only and is the committing agent's call; the review sees
+the same entries and judges every line on its own, so an acknowledgement
+never settles the review.
 
 ## Exposure mode
 
@@ -81,12 +91,12 @@ asking.
 
 A pull-request body, issue, or comment never enters git, so the pre-commit
 scanner and the commit review never see it, yet it is as public as the
-commits. The skill writes that text to files and passes them to privacy-guard
-as publish text, and posts exactly what was reviewed. The reviewer treats two
-things as findings there and in commits that a secret scanner can't catch:
-references to a private tracker (ticket keys, tracker links), and references
-to the author's other repositories or spaces that the change doesn't depend
-on in code.
+commits. The skill writes that text to files and passes them to `git-scan
+review --publish`, and posts exactly what was reviewed. git-scan's reviewer
+treats two things as findings there and in commits that a secret scanner
+can't catch: references to a private tracker (ticket keys, tracker links),
+and references to the author's other repositories or spaces that the change
+doesn't depend on in code.
 
 ## Environment facts (Claude Code cloud sessions)
 
@@ -94,7 +104,8 @@ on in code.
   environment variables, so it can install public tools only. Its result is
   cached for up to about seven days.
 - Private repositories are reachable in a session only once attached to it;
-  Drive connectors are account-level and need no per-session step.
+  account-level connectors need no per-session step, which is what lets the
+  user's missing-configuration message be followed in a fresh container.
 - At every session start the environment writes its own git identity into
   `~/.gitconfig`; `GIT_AUTHOR_*` and `GIT_COMMITTER_*` environment variables
   override it.

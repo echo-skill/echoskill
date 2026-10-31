@@ -69,10 +69,10 @@ independently shippable — it means the repository at that commit is
 syntactically valid, imports resolve, and the commit represents a real state
 someone could have had.
 
-## The scan is per-push, not per-commit
+## The review is per-push, not per-commit
 
 When committing a batch of N commits, do all N commits first (each through the
-skill's Steps 1–6), then run the privacy-guard review once at the end. The
-review evaluates the content of every unpushed commit in a single pass — one
-invocation covers the whole batch. Running it per commit is wasted effort and
-gives the review a partial view of what will actually be pushed.
+skill's Steps 1–6), then run `git-scan review` once at the end. It reads the
+content of every unpushed commit in a single run — one invocation covers the
+whole batch. Running it per commit is wasted effort and gives the review a
+partial view of what will actually be pushed.
