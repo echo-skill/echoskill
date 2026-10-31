@@ -20,10 +20,9 @@ Shape:
 - `references/agent-tests.md` — tests of a product's *own* LLM features
   (old Part 3). Its first paragraph distinguishes it from agent evals.
 - `references/agent-evals.md` — can an outside agent drive an MCP tool
-  surface from descriptions alone. The method and harness recipes came
-  from the mcp-app skill's `references/agent-evals.md`; mcp-app should
-  point here rather than carry its own copy, keeping only what is
-  framework-specific.
+  surface from descriptions alone: the method plus verified harness
+  recipes. This is the one home for that method; a framework's own skill
+  should point here and keep only what is framework-specific.
 
 Why: the single-file version was 614 lines (over the 500-line body
 guideline, no progressive disclosure), its name and description covered
