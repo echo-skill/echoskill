@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: add-make-targets-and-testing-section
+expected_outcome: |
+  A Makefile with a `setup` target that creates .venv and installs the
+  editable package with dev extras, and a `test` target that depends on
+  setup and runs only the unit suite. pyproject.toml gains a pytest
+  configuration so bare `pytest` ignores tests/integration. README.md (the
+  repo's only doc) gains a Testing section following the make setup /
+  pytest / make test shape, with a table of integration suites, their
+  paths, and prerequisites, and explicit commands to run them. .venv is
+  gitignored. The target names used in the Makefile and the names used in
+  the docs are identical, and the agent verified that bare pytest runs
+  only unit tests.
+context:
+  scaffold_script: place-files.sh

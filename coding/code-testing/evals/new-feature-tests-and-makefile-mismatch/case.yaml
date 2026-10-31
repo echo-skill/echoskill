@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: new-feature-tests-and-makefile-mismatch
+expected_outcome: |
+  tally gains an export command in core (write entries to CSV at a given
+  path) wired through the CLI, with sociable tests that run the real code
+  against a temp directory via the existing TALLY_DIR isolation fixture:
+  record entries, export, read the CSV back and assert its rows; and a
+  CLI test that invokes main() in-process. No mocking of csv, open, or
+  core. The agent notices that CONTRIBUTING.md documents `make setup`
+  while the Makefile defines `venv`, and reconciles them (renaming the
+  target to `setup`, the documented name, is the expected fix), then
+  verifies `make test` works from the fixture directory and that bare
+  pytest runs only unit tests.
+context:
+  scaffold_script: place-files.sh
