@@ -1,48 +1,21 @@
 # Reviewing content that was already pushed
 
-Sometimes commits reach a remote without a privacy-guard review — a push
-slipped through in an environment with no review wired up, a push happened
-outside this workflow, or a newer version of the review needs to re-check
-content that was pushed earlier. This is how to make already-pushed commits
-reviewable again, because the review only looks at **unpushed** commits
-(`git log @{upstream}..HEAD`).
-
-The idea: create a temporary branch at the pre-push baseline, push it to
-establish a remote tracking point, then merge the real branch in. Relative to
-the temporary branch's upstream, the already-pushed commits now appear as
-"unpushed" and fall within the review's scope.
-
-## Setup
+Sometimes commits reach a remote without a review — a push slipped through
+in an environment with no review wired up, a push happened outside this
+workflow, or a newer configuration should re-check content that was pushed
+earlier. The review normally reads the unpushed commits; for commits
+already on the remote, name the range:
 
 ```bash
-# 1. Identify the last commit that was on the remote BEFORE the unreviewed push.
-git log --oneline -20
-
-# 2. Create a baseline branch at that commit and push it to set an upstream.
-git checkout -b rescan-basis <baseline-sha>
-git push -u origin rescan-basis
-
-# 3. Merge your real branch in. The pushed commits are now "ahead" of
-#    rescan-basis's upstream, so the review will see them.
-git merge <your-branch>
+git-scan review --range <baseline>..<tip>
 ```
 
-## Run the review
+`<baseline>` is the last commit that was on the remote before the
+unreviewed push, `<tip>` the branch as pushed. Keep the exposure mode
+matched to the remote the content went to: public for a public or shared
+remote, which is the default. Commits already reviewed are skipped.
 
-Run the privacy-guard review (skill Step 7) against this repo while
-`rescan-basis` is checked out. Keep the exposure mode matched to the remote
-the content was pushed to — `public` for a public or shared remote. The review
-reads the commits that are now ahead of `rescan-basis`'s upstream.
-
-## Interpret and clean up
-
-**If the review passes**, the scaffolding has done its job — remove it:
-
-```bash
-git checkout <your-branch>
-git branch -D rescan-basis
-git push origin --delete rescan-basis
-```
+**If the review passes**, nothing more is needed.
 
 **If the review finds something**, the content is already on the remote, so
 fixing it locally is not enough on its own:
@@ -54,6 +27,3 @@ fixing it locally is not enough on its own:
    credential immediately (treat a pushed secret as compromised), and for
    history rewriting or repository remediation that is beyond this skill's
    scope — surface it to the user rather than attempting it silently.
-
-The `rescan-basis` branch can be deleted either way — it was only scaffolding
-to bring the already-pushed commits back into the review's view.
