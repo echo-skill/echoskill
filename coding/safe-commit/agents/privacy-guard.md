@@ -379,6 +379,7 @@ Schema (open — add fields as needed; `findings` is always an array):
   "failure_reason": "not_a_git_repo | patterns_unavailable | patterns_not_found | patterns_ambiguous | null",
   "repo": "repo-name or null",
   "exposure_mode": "public | relaxed",
+  "commits": ["the unpushed commits reviewed, by short id (12 characters)"],
   "patterns_loaded": true,
   "pattern_count": 0,
   "scan_scope": {
@@ -412,6 +413,10 @@ Rules for the JSON:
 - In `relaxed` mode, names and paths you surface as awareness go in with
   `severity: "low"`; secrets, account ids, and financial ids stay `high`.
 - A clean review is `status: "completed"` with `findings: []`.
+- `commits` names every unpushed commit the review read. The caller hands the
+  result to `git-scan review record`, which records the review only if that
+  list is the set of commits the branch would push; a review of fewer
+  commits than are unpushed is not recorded.
 
 ### Failure output
 

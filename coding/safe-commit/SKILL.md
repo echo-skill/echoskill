@@ -13,9 +13,10 @@ Two layers protect every push, and they are not interchangeable:
 
 1. **[git-scan](https://github.com/echoark/git-scan)**, wired as a pre-commit
    hook, catches known secret formats and the user's own configured patterns
-   at commit time. Its optional push gate refuses pushes of commits that
-   skipped it or lack a required review mark. "Make sure the scanner is ready"
-   below sets it up.
+   at commit time, and lists matches on judgment entries for the agent to
+   look at and acknowledge. Its optional push gate refuses pushes of commits
+   that skipped it or that no recorded review covers. "Make sure the scanner
+   is ready" below sets it up.
 2. **The privacy-guard review** (this skill's bundled `agents/privacy-guard.md`)
    is the judgment layer on top. It catches what a regex cannot — a real name
    in a commit message, a personal-use framing in a README, an absolute path
@@ -228,11 +229,14 @@ blockers — use judgment, but still show them to the user.
 
 ## Step 9: Advise, and offer the push
 
-**Pass:** If a push gate requires a review mark for this repository
-(git-scan's gate, installed machine-wide or for this repository: `git-scan
-hook status` shows whether it's on, and a refused push names the missing
-label), add the mark to the reviewed commit: `git-scan mark privacy-review`.
-One mark on the newest commit covers every unpushed commit in the review.
+**Pass:** Record the review with git-scan, so the push gate knows it ran:
+write the reviewer's `privacy-guard-result` block to a file and run
+`git-scan review record <file>` (git-scan 0.8 or later). git-scan records
+it only when the result is complete, has no findings, and covers the
+unpushed commits; one record on the newest commit covers every unpushed
+commit in the review. Where the push gate requires a review (`git-scan hook
+status` shows it, and a refused push names this command), a push without
+the record is refused.
 
 Before asking whether to push, show a short validation summary, as a table or
 whatever reads fastest at a glance. List each check that was run against the

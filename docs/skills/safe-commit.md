@@ -8,10 +8,10 @@ folder holds only what an agent uses at runtime.
 
 | Part | Owner | Role |
 |---|---|---|
-| git-scan | echoark/git-scan | Pre-commit scan against the user's patterns; optional push gate that refuses commits lacking required marks |
+| git-scan | echoark/git-scan | Pre-commit scan against the user's patterns, with judgment matches to acknowledge; optional push gate that refuses unscanned commits and, when required, commits no recorded review covers |
 | git-scan user config | the user's Google Drive | Patterns (scanned and judgment-only, each with its note), notes, allowed emails, identity rules, required marks |
 | privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent; reads its patterns and notes from git-scan's configuration (`git-scan patterns list --json`, git-scan 0.8 or later) |
-| safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, mark, push |
+| safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, record, push |
 
 The Drive file carries `skill-data=safe-commit` and
 `skill-data-role=git-scan-config`. Lookups use both properties, so they find
@@ -51,21 +51,40 @@ its hook and its config are already in place.
   Setting it to point at this skill is what brings an agent here when it tries
   a plain `git commit` first.
 
-## The push gate and the review mark
+## The push gate and the review record
 
-git-scan's push gate refuses any outgoing commit that lacks its own `scanned`
-mark or a mark the user requires. This skill adds `privacy-review` after a
-clean review (`git-scan mark privacy-review`), so the gate refuses pushes that
-skipped the review.
+git-scan's push gate refuses any outgoing commit it has not scanned and,
+where the configuration requires a review, any commit no recorded review
+covers. This skill records the review after a clean pass by handing
+git-scan the reviewer's own result (`git-scan review record <file>`), so the
+gate refuses pushes that skipped the review or reviewed less than is being
+pushed.
 
-- One mark on the newest commit covers every unpushed commit in the review,
-  matching how privacy-guard reviews the whole unpushed range.
+- git-scan records a result only when it is complete, has no findings, and
+  its `commits` list is the set of unpushed commits. One record on the
+  newest commit covers every unpushed commit in the review, matching how
+  privacy-guard reviews the whole unpushed range.
 - An amended or rebased commit is a new commit and needs a new review.
-- The mark records that the review step ran, not how well; the gate catches a
-  forgotten review.
+- There is no command that writes an arbitrary label on a commit, and the
+  skill does not describe how git-scan keeps its records. A documented
+  "mark it reviewed" command was the bypass with the instructions attached;
+  the record now has to come from a result shaped like the reviewer's.
+- Until git-scan runs the reviewer itself (planned), the hand-off of the
+  result is the agent's, so this is still an honor system, with forgetting
+  made impossible and cheating made deliberate.
 - Coverage is computed against the remote being pushed to. A repository with
   several remotes can push commits that were reviewed relative to a different
   one.
+
+## Judgment matches at commit time
+
+A judgment entry in git-scan's configuration names a value that is
+sensitive only in context. The scan lists each match with the entry's note
+and refuses the commit until the agent has looked and run `git-scan ack`,
+which applies to exactly the staged content. The acknowledgement clears
+judgment matches only and is the committing agent's call; privacy-guard
+sees the same entries through `patterns list --json` and judges every line
+on its own, so an acknowledgement never settles the review.
 
 ## Exposure mode
 
