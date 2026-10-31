@@ -267,7 +267,7 @@ skills-repo/
 │   └── extend-document/SKILL.md
 ├── coding/                 ← collection
 │   ├── skill-author/SKILL.md
-│   └── sociable-unit-tests/SKILL.md
+│   └── code-testing/SKILL.md
 └── claude/                 ← platform-specific collection
     └── sessions/SKILL.md
 ```

@@ -1,0 +1,18 @@
+schema_version: "1.1"
+name: mcp-tools-usable-from-descriptions
+expected_outcome: |
+  The agent recognizes this as an agent eval of a tool surface (not a unit
+  test and not a test of the product's own LLM features): it plans or runs
+  isolated headless agent sessions that see only the tinykv server started
+  from the working tree, with only tinykv's tools allowed and shell and
+  file-write tools denied, using realistic under-specified prompts and a
+  fresh copy of a seeded data file per task, and judges each run by
+  comparing the data file before and after (everything targeted changed,
+  nothing else did). It reports per-task results and turns repeated
+  mistakes into concrete fixes to the tool descriptions (for example that
+  `put` silently overwrites, that `remove` takes the key not a prefix, that
+  `list_keys` with no prefix lists everything), not into changes to the
+  agent. If no authenticated harness is available it says exactly what was
+  and was not run, rather than claiming the eval passed.
+context:
+  scaffold_script: place-files.sh
