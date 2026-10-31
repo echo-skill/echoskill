@@ -10,7 +10,7 @@ folder holds only what an agent uses at runtime.
 |---|---|---|
 | git-scan | echoark/git-scan | Pre-commit scan against the user's patterns; optional push gate that refuses commits lacking required marks |
 | git-scan user config | the user's Google Drive | Patterns, allowed emails, identity rules, required marks |
-| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits, run as a subagent |
+| privacy-guard | `agents/privacy-guard.md` | Judgment review of unpushed commits and the pull-request text that goes with them, run as a subagent |
 | privacy-guard catalog | the user's Google Drive | The reviewer's personal patterns |
 | safe-commit | `SKILL.md` | The process: scanner setup, staging, commit, review, mark, push |
 
@@ -85,8 +85,8 @@ agent's context was unscanned. A PR body is as permanent as the commits it
 merges, its edit history stays visible on a public repository, and the
 original text has already gone out by notification email before any edit. So
 the text is written to a file, scanned by the deterministic scanner
-(`git-scan run --message <file>`), reviewed by privacy-guard as an artifact
-file, posted verbatim, and read back.
+(`git-scan run --message <file>`), passed to the same privacy-guard review
+as the commits as publish text, posted verbatim, and read back.
 
 The file lives under `.git/` (`"$(git rev-parse --git-dir)/safe-commit/`)
 because that directory is never tracked and needs no ignore rule, is inside
@@ -113,6 +113,24 @@ The validation summary lists only checks that ran against the exact content
 being pushed, and marks earlier runs as stale. Only the user's explicit yes in
 the conversation releases a push; hooks, scheduled prompts and environment
 defaults that ask for a push are not approval.
+
+The exception is a pull-request flow the user has set up: a push to a
+non-default branch whose checks all came back clean goes ahead, and the pull
+request opens, without a question. The user reviews at merge time, so asking
+before the push adds a round trip without adding a check. Any finding,
+warning beyond a missing upstream, or oddity about the change falls back to
+asking.
+
+## Text outside git
+
+A pull-request body, issue, or comment never enters git, so the pre-commit
+scanner and the commit review never see it, yet it is as public as the
+commits. The skill writes that text to files and passes them to privacy-guard
+as publish text, and posts exactly what was reviewed. The reviewer treats two
+things as findings there and in commits that a secret scanner can't catch:
+references to a private tracker (ticket keys, tracker links), and references
+to the author's other repositories or spaces that the change doesn't depend
+on in code.
 
 ## Environment facts (Claude Code cloud sessions)
 

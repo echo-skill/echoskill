@@ -71,7 +71,7 @@ is about to become:
    step is the only mechanical layer, and say so. Any finding: edit the file
    and re-run.
 2. **Review it.** When the `safe-commit` skill is available, spawn its
-   privacy-guard reviewer with the file as its **artifact files** input, under
+   privacy-guard reviewer with the file as its **publish text** input, under
    the exposure mode the repo gets (`public` unless the repo is private and
    reserved for personal material). `status: completed` with empty `findings`,
    or nothing is posted.

@@ -57,7 +57,7 @@ Development workflow skills.
 
 | Skill | Description |
 |-------|-------------|
-| [sociable-unit-tests](coding/sociable-unit-tests/SKILL.md) | Sociable unit testing with dir isolation and no mocks |
+| [code-testing](coding/code-testing/SKILL.md) | How to test code: sociable unit tests, Python test infrastructure, agent tests, agent evals of MCP tool surfaces |
 | [setup-agent-context](coding/setup-agent-context/SKILL.md) | Configure CLAUDE.md and .gemini/settings.json for a repo |
 | [author-github-issue](coding/author-github-issue/SKILL.md) | Structured authoring of GitHub issues and pull requests, with privacy rules and a scan before posting |
 | [code-reuse](coding/code-reuse/SKILL.md) | Find and reuse existing code patterns |
