@@ -32,6 +32,12 @@ fine without it — it just surfaces the candidates for you.
 This skill is human-in-the-loop and never archives without explicit
 approval on the batch.
 
+## References (read on demand)
+
+| Topic | Read it when |
+|---|---|
+| [references/overdue-bills.md](references/overdue-bills.md) | A candidate email says a payment is past due, late, or missed. Checks for the evidence that it was already resolved (payment to the creditor, payment confirmation, later statements and notices) before surfacing it; says what it found; proposes archive with evidence or surfaces what is still unclear. Shutoff, collections, and legal-stage notices always surface. |
+
 ## Prerequisites (MCP connectors)
 
 This skill needs external connectors. They are environment, not part
@@ -42,7 +48,7 @@ of the bundle — confirm they are connected before relying on them.
 | Google Workspace (Gmail) | **Required** | Reading the inbox, archiving (removing the `INBOX` label), reading individual emails. Without it the skill cannot run. |
 | Google Drive tools that search by file property, list a folder, replace a file's content in place by its ID, and set file properties | **Required unless the data root is local** | Locating and read/writing the data root — see "Locating your data". This is what makes the skill work on mobile and web, where there is no filesystem. If Drive is unavailable, the skill can still run against a local data root on a shell surface. |
 | A task manager tool that creates and updates tasks | Optional | The `track-as-task` outcome. If absent, surface the item to the user as "make a task" instead of creating one. |
-| A banking/finance tool that lists accounts and transactions | Optional | The Financial-sweep safety checks (verify a balance is positive / autopay ran before archiving an alert). If absent, treat those alerts conservatively as `review` rather than auto-archiving. |
+| A banking/finance tool that lists accounts and transactions | Optional | The Financial-sweep safety checks (verify a balance is positive / autopay ran before archiving an alert) and the past-due resolution check in `references/overdue-bills.md`. If absent, treat those alerts conservatively as `review` rather than auto-archiving; the past-due check then rests on Gmail evidence alone. |
 
 Tool names vary by server and by how it is registered in the session.
 Use whatever Gmail / Drive / task / finance tools the session exposes
@@ -251,7 +257,8 @@ attention, in priority order. Optimize for not missing anything urgent.
   claims/legal, anything time-critical.
 - Do the deep verification Sweep skips — check the finance MCP, prior
   invoices, whether an obligation is still live (per the stale-review
-  heuristic in `rules.md`).
+  heuristic in `rules.md`). For past-due / late-payment notices, run the
+  resolution check in `references/overdue-bills.md`.
 - **End state:** a short ranked list, most-urgent first, each with the
   one fact that makes it urgent and the suggested action. Offer to run a
   Sweep afterward to clear the rest.
@@ -307,6 +314,11 @@ verify the underlying account state when a finance MCP is available
   decline is historical, archive; if recent and still failing, surface.
 - Budget alerts < 100% → archive. At 100% → surface (may be intended
   ramp or a runaway to investigate).
+- "Past due" / "late payment" / "missed payment" → run the resolution
+  check in `references/overdue-bills.md` before surfacing. Resolved →
+  propose archive with the evidence shown; unclear or still open →
+  surface with what was checked. Shutoff / collections / legal-stage
+  notices always surface.
 
 **Add additional label-driven sweeps here** as new buckets emerge
 (candidates: `Bills`, `Rentals`, `Schools`, `Subscriptions`).
@@ -341,7 +353,12 @@ For each email, decide one of:
 Apply the universal safety net FIRST (urgent action, security alert,
 past-due / penalty, payment failed, new account opened). Those ALWAYS
 go to review (or task), never archive — even if another rule would
-have archived them.
+have archived them. One bounded exception, in both modes: a past-due /
+late-payment notice gets the resolution check in
+`references/overdue-bills.md` first, and one the evidence shows was
+already paid may be *proposed* for archive with that evidence shown,
+still subject to batch approval. Shutoff, collections, and legal-stage
+notices always surface.
 
 For ambiguous senders, do a quick `contacts.yaml` lookup. Don't read
 full bodies unless metadata is genuinely insufficient.
@@ -485,7 +502,8 @@ continuing. These get distilled into `rules.md` later.
 ### 9. Log the run
 
 PREPEND an entry to `$INBOX_DATA/email-triage-log.md` recording: what
-was archived (by group + count), unsubscribe candidates flagged (and
+was archived (by group + count), past-due notices archived as resolved
+(each with its evidence line), unsubscribe candidates flagged (and
 handed to inbox-unsubscribe, if used), tasks created, standing
 decisions made, and what was left open.
 
