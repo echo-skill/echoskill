@@ -2,47 +2,82 @@
 name: author-github-issue
 description: >-
   Use when creating (gh issue create), editing (gh issue edit), or
-  commenting on (gh issue comment) a GitHub issue — whether the user
+  commenting on (gh issue comment) a GitHub issue, or when writing a pull
+  request's title or body or commenting on a pull request — whether the user
   asks directly or the agent decides one should be filed for a bug,
   feature, design decision, or any other trackable item.
 ---
 
-# Authoring GitHub Issues
+# Authoring GitHub Issues and Pull-Request Text
 
-## Workflow: File-Based Issue Creation and Editing
+## Workflow: File-Based Creation and Editing
 
-Always use a temporary `.md` file and `--body-file` for issue operations.
-Never pass issue body content inline via `--body` or heredocs. This ensures:
+Always write the text to a file and post it with `--body-file` (or pass the
+file's content unchanged to the GitHub API or tool). Never pass the body
+inline via `--body` or heredocs. This ensures:
 
 - The user sees the full content via the file-editing tool before it ships.
 - Edits are visible as diffs, not opaque string replacements.
 - No content is lost to shell escaping or truncation.
 
+The same workflow covers issues, issue comments, pull-request titles and
+bodies, and pull-request comments.
+
+Keep the draft under the repository's git directory:
+`"$(git rev-parse --git-dir)/safe-commit/"` (for example `issue-<slug>.md`,
+`pr-title.txt`, `pr-body.md`, `pr-comment-<n>.md`). It is never tracked,
+needs no ignore rule, and resolves correctly in a linked worktree. Outside a
+repository, use a temp directory.
+
+### Before Posting: Scan, Review, Post Verbatim, Read Back
+
+1. **Scan the file** with a deterministic secret scanner: with git-scan,
+   `git-scan run --message <file>`; with gitleaks,
+   `gitleaks detect --no-git --source <file>`; with trufflehog,
+   `trufflehog filesystem <file>`. Any finding: edit the file and scan again.
+2. **Review it** where a review applies: when the text goes with a push
+   reviewed by git-scan (the `safe-commit` skill), pass it to that review
+   with `git-scan review --publish <file>`. `git-scan review` currently
+   cannot review publish text on its own, without unpushed commits to review
+   alongside it; until it can, text posted on its own gets the scan and the
+   content rules below.
+3. **Post verbatim:** the reviewed file, byte for byte, with nothing added
+   in the call.
+4. **Read it back** after posting and compare it to the file. A difference
+   is a finding: fix the posted text at once and report it.
+
 ### Creating a New Issue
 
-1. Write the issue body to a temp file:
+1. Write the issue body to the draft file:
    ```
-   Write tool → /tmp/issue-<slug>.md
+   Write tool → "$(git rev-parse --git-dir)/safe-commit/issue-<slug>.md"
    ```
-2. Let the user review/approve the file content.
+2. Let the user review/approve the file content, then scan it as above.
 3. Create the issue:
    ```bash
-   gh issue create --repo <owner>/<repo> --title "<title>" --body-file /tmp/issue-<slug>.md
+   gh issue create --repo <owner>/<repo> --title "<title>" --body-file "$(git rev-parse --git-dir)/safe-commit/issue-<slug>.md"
    ```
 
 ### Updating an Existing Issue
 
 1. Fetch the current body to a file:
    ```bash
-   gh issue view <number> --repo <owner>/<repo> --json body --jq '.body' > /tmp/issue-<number>.md
+   gh issue view <number> --repo <owner>/<repo> --json body --jq '.body' > "$(git rev-parse --git-dir)/safe-commit/issue-<number>.md"
    ```
 2. Edit the file using the file-editing tool (Edit on Claude Code,
    `edit_file` on Gemini CLI). This shows the user a diff of what changed
    rather than replacing the entire issue body opaquely.
-3. Update the issue from the file:
+3. Scan it as above, then update the issue from the file:
    ```bash
-   gh issue edit <number> --repo <owner>/<repo> --body-file /tmp/issue-<number>.md
+   gh issue edit <number> --repo <owner>/<repo> --body-file "$(git rev-parse --git-dir)/safe-commit/issue-<number>.md"
    ```
+
+### Pull Requests
+
+Write the title and body to `pr-title.txt` and `pr-body.md` in the draft
+directory before the push, so the push's review can cover them; post them
+with `gh pr create --title "$(cat <title file>)" --body-file <body file>` (or
+`gh pr edit`, `gh pr comment --body-file`), and read the pull request back.
 
 ### Why This Matters
 
@@ -51,12 +86,14 @@ Never pass issue body content inline via `--body` or heredocs. This ensures:
   approval UI, so the user can review deltas naturally.
 - **No data loss**: Large issue bodies don't get truncated by shell quoting,
   heredoc limits, or argument length limits.
-- **Auditability**: The temp file persists for the session if the user wants
+- **Auditability**: The draft file persists for the session if the user wants
   to review what was sent.
 
-## Content Rules for GitHub Issues
+## Content Rules for GitHub Issues and Pull Requests
 
-**Treat every issue as a public-facing artifact.** Even on private repos,
+**Treat every issue, pull-request title, body and comment as a public-facing
+artifact.** A pull-request body is as permanent as the commits it merges,
+and its edit history stays visible. Even on private repos,
 issues may become public (collaborators, open-sourcing, forks). Write from
 the perspective of someone contributing to a reusable product, not from the
 perspective of the current user's personal workflow.
@@ -70,6 +107,8 @@ perspective of the current user's personal workflow.
   account IDs
 - Examples drawn from the user's local data, use cases, or environment
 - Anything that reveals the author's identity as a user of the repo
+- Keys or links from a private tracker (an issue key, a board URL). The
+  tracker links to the public artifact, never the reverse.
 - References to the user's other projects, repos, or GitHub repositories —
   unless the repo this issue belongs to directly imports or depends on that
   other project (e.g., it's declared as a dependency in package config).
