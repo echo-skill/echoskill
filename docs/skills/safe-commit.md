@@ -67,11 +67,14 @@ never settles the review.
 
 ## Exposure mode
 
-`relaxed` needs two confirmations: the hosting service reports the repository
-as private, and the repository is one the owner reserves for personal material
-(by a naming convention the owner has stated, or by asking). Anything else is
-`public`. Privacy alone is not enough because private repositories are often
-shared or published later.
+Every review is public unless the agent asks for a relaxed one, and git-scan
+decides whether it may: the repository must be eligible (`git-scan relax`,
+which needs the host to report it private, or a host the user vouched for)
+and still private at review time. The skill adds what git-scan can't check:
+the user's own rules or instructions must identify the repository as
+personal, the public review must be blocking, and the user must consent.
+Privacy alone is not enough, because private repositories are often shared
+or published later. Needs git-scan 0.9.0 or later.
 
 ## Before the push
 

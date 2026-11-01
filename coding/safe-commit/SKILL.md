@@ -193,11 +193,22 @@ git-scan reviews every unpushed commit and the publish text and records a
 clean result itself; nothing about the reviewer, its inputs, or its
 configuration is yours to arrange. The run takes a minute or more: start it
 as a background command where the harness supports one, and wait for it.
-Default mode is strict and treats the repository as public. Pass
-`--relaxed` only when the user has told you, in this conversation or in
-standing instructions, that this repository is one they keep for personal
-material and git-scan has it configured as such; git-scan refuses the flag
-otherwise, and a refusal is the answer.
+
+Every review is public unless `--relaxed` is passed for that one review.
+A relaxed review is a last resort:
+
+- Ask for it only when the public review is actually blocking the work,
+  and only with the user's consent in this conversation. Never ahead of
+  time or "to be safe".
+- The repository must first be made eligible with `git-scan relax`, once
+  per clone. Do that only if the user's own rules or instructions
+  identify the repository as personal; if nothing does, ask. Never for a
+  repository the host reports as public.
+- A session that starts with no eligible repository is normal, not
+  something to fix.
+
+git-scan refuses `--relaxed` for a repository that isn't eligible or is no
+longer private, and a refusal is the answer.
 
 ## Step 9: Interpret the result
 
