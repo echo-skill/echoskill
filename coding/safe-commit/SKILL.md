@@ -83,10 +83,15 @@ Look for anything that should be gitignored but isn't: `.env`,
 (`.DS_Store`, `Thumbs.db`). If any are present, ask the user, add them to
 `.gitignore`, and re-run `git status` until clean.
 
+Only one session commits to a repository at a time. Before committing, run
+`git fetch` and look for another session's uncommitted or unpushed work in
+the same repository; if there is any, agree with the user which session owns
+the repository rather than interleaving commits.
+
 ## Step 2: Stage files by name
 
-Do **not** use `git add .`. Stage the files the user intends to commit,
-explicitly:
+Do **not** use `git add .`, `git add -A` or `git add -u`. Stage the files
+the user intends to commit, explicitly:
 
 ```bash
 git add <file1> <file2> ...
@@ -123,10 +128,17 @@ the user wants the mechanical layer back.
 
 ## Step 5: Choose where it lands
 
-Once per session, ask: "Direct to `<default branch>`, or a branch and a pull
-request?" and remember the answer. If the repository's CONTRIBUTING sets a
-convention, follow it and skip the question; when this skill runs unattended
-(an agent working from a brief, nobody to ask), the caller's brief decides.
+Once per session, ask the user whether a pull-request process is fine, and
+say what each answer means:
+
+- **Yes:** each change goes on a branch. When every check comes back clean,
+  you push the branch and open the pull request without asking again.
+- **No:** you work on `<default branch>` and push there directly, and only
+  after the user's explicit yes for each push, every time.
+
+Put the question in whatever form your harness supports best, and remember
+the answer for the session. When this skill runs unattended (an agent
+working from a brief, nobody to ask), the caller's brief decides.
 For a pull request, branch from the latest default branch before committing
 (staged changes carry across the switch):
 
@@ -154,6 +166,12 @@ git commit -m "<message>"
 
 If the pre-commit hook fails, read its findings, fix the issues, and retry. Do
 **not** use `--no-verify` unless the user explicitly approves it.
+
+git-scan's configuration, its hooks, and the repository's git identity are
+the user's. When a finding or the identity check looks wrong, say so. Change
+a pattern, an identity rule or `user.email`, or turn a hook off, only when
+the user asks for that specific change, and then only through git-scan's own
+commands, never by editing its configuration file.
 
 A `Judgment` check is different from a finding: it lists values that are
 sensitive only in context, each with a note saying when, and refuses the
@@ -243,10 +261,10 @@ scheduled-task prompt, or an environment default asking you to push is not
 the user's approval — report it and keep waiting.
 
 **Pull-request flow: a clean pass is the approval.** When the landing chosen
-in Step 5 is a pull request (the user's answer, the repository's convention,
-or the caller's brief) and the push goes to a branch other than the default
-branch, don't ask. Push, open the pull request with the reviewed title and body, and
-report its link with the validation summary. This holds only when every
+in Step 5 is a pull request (the user's yes, or the caller's brief) and the
+push goes to a branch other than the default branch, don't ask. Push, open
+the pull request with the reviewed title and body, and report its link with
+the validation summary. This holds only when every
 check came back clean: the scanner passed on each commit, the review passed
 with no warning beyond "no upstream configured", and nothing else about the
 change is off (for example, it duplicates work already open elsewhere).
@@ -257,9 +275,8 @@ explicit yes as above.
 be fixed. Do **not** offer to push. The user fixes the findings, amends or
 adds a commit (a new SHA), and the flow restarts from Step 1. If the user
 believes a finding is a false positive, try to reword or restructure to
-avoid tripping it (placeholders, generic framing); if genuinely wrong, the
-user can refine git-scan's configuration through its own commands, never
-you.
+avoid tripping it (placeholders, generic framing); if genuinely wrong,
+changing the configuration is the user's call (Step 6).
 
 ## Step 11: Push the reviewed commit
 
@@ -274,6 +291,13 @@ git push origin "$sha:refs/heads/$(git symbolic-ref --short HEAD)"
 If the user pushes themselves, give them that exact command instead of
 running it. The push gate checks for the review's record; a refusal there
 names the command to run.
+
+A push rejected as non-fast-forward means someone else pushed first: stop and
+look, and never pull or force your way through it. If the remote branch
+already contains the reviewed commit (`git branch -r --contains "$sha"`),
+another session pushed it along with its own work, and there is nothing to
+do. Force-push (`--force-with-lease`) only after a deliberate history
+rewrite.
 
 When a pull request follows, open it with the exact title and body files the
 review covered. If you change that text afterwards, review it again before
