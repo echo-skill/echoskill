@@ -83,12 +83,9 @@ being pushed, and marks earlier runs as stale. Only the user's explicit yes in
 the conversation releases a push; hooks, scheduled prompts and environment
 defaults that ask for a push are not approval.
 
-The exception is a pull-request flow the user has set up: a push to a
-non-default branch whose checks all came back clean goes ahead, and the pull
-request opens, without a question. The user reviews at merge time, so asking
-before the push adds a round trip without adding a check. Any finding,
-warning beyond a missing upstream, or oddity about the change falls back to
-asking.
+Step 8 skips the push question on the pull-request route because the user
+reviews at merge time: asking before the push adds a round trip without
+adding a check.
 
 ## Landing choice
 
