@@ -294,13 +294,6 @@ If the user pushes themselves, give them that exact command instead of
 running it. The push gate checks for the review's record; a refusal there
 names the command to run.
 
-A push rejected as non-fast-forward means someone else pushed first: stop and
-look, and never pull or force your way through it. If the remote branch
-already contains the reviewed commit (`git branch -r --contains "$sha"`),
-another session pushed it along with its own work, and there is nothing to
-do. Force-push (`--force-with-lease`) only after a deliberate history
-rewrite.
-
 When a pull request follows, open it with the exact title and body files the
 review covered. If you change that text afterwards, review it again before
 posting; the same goes for later edits to the pull-request body and for
