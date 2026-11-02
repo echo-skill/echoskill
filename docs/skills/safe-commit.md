@@ -83,7 +83,7 @@ being pushed, and marks earlier runs as stale. Only the user's explicit yes in
 the conversation releases a push; hooks, scheduled prompts and environment
 defaults that ask for a push are not approval.
 
-Step 10 skips the push question on the pull-request route because the user
+Step 8 skips the push question on the pull-request route because the user
 reviews at merge time: asking before the push adds a round trip without
 adding a check.
 
