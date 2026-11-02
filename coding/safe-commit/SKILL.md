@@ -161,8 +161,9 @@ git commit -m "<message>"
 
 If the pre-commit hook fails, handle its findings as Step 10 says for a
 failed review: show each one in context with ways to resolve it, and make
-only the change the user picks. Do **not** use `--no-verify` unless the user
-explicitly approves it.
+only the change the user picks. **Never** use `--no-verify` or any other way
+around the hooks, whoever asks and whatever the reason. There is always a
+better way: fix the content, or the user changes the configuration (below).
 
 git-scan's configuration, its hooks, and the repository's git identity are
 the user's. When a finding or the identity check looks wrong, say so. Change
