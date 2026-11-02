@@ -166,7 +166,7 @@ git-scan's configuration, its hooks, and the repository's git identity are
 the user's. When a finding or the identity check looks wrong, say so. Change
 a pattern, an identity rule or `user.email`, or turn a hook off, only when
 the user asks for that specific change, and then only through git-scan's own
-commands, never by editing its configuration file.
+commands.
 
 A `Judgment` check is different from a finding: it lists values that are
 sensitive only in context, each with a note saying when, and refuses the
