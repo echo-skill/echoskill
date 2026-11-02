@@ -266,12 +266,19 @@ change is off (for example, it duplicates work already open elsewhere).
 Anything less, or a push to the default branch, waits for the user's
 explicit yes as above.
 
-**Fail:** show every finding with its value and location, and say what must
-be fixed. Do **not** offer to push. The user fixes the findings, amends or
-adds a commit (a new SHA), and the flow restarts from Step 1. If the user
-believes a finding is a false positive, try to reword or restructure to
-avoid tripping it (placeholders, generic framing); if genuinely wrong,
-changing the configuration is the user's call (Step 6).
+**Fail:** do **not** offer to push, and don't change anything to make a
+finding go away. For each finding, show the user:
+
+- git-scan's output for it, verbatim;
+- the flagged line with enough surrounding lines to judge it, and whether
+  the line is added or removed;
+- one or more ways to resolve it (reword, a placeholder, drop the line, or a
+  configuration change if it's a false positive), with what each costs.
+
+Then wait for the user's guidance. Make only the change the user picks,
+commit it (an amend or a new commit, either way a new SHA), and restart the
+flow from Step 1. Changing git-scan's configuration is the user's call
+(Step 6).
 
 ## Step 11: Push the reviewed commit
 
