@@ -83,11 +83,6 @@ Look for anything that should be gitignored but isn't: `.env`,
 (`.DS_Store`, `Thumbs.db`). If any are present, ask the user, add them to
 `.gitignore`, and re-run `git status` until clean.
 
-Only one session commits to a repository at a time. Before committing, run
-`git fetch` and look for another session's uncommitted or unpushed work in
-the same repository; if there is any, agree with the user which session owns
-the repository rather than interleaving commits.
-
 ## Step 2: Stage files by name
 
 Do **not** use `git add .`, `git add -A` or `git add -u`. Stage the files
