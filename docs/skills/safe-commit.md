@@ -83,14 +83,9 @@ being pushed, and marks earlier runs as stale. Only the user's explicit yes in
 the conversation releases a push; hooks, scheduled prompts and environment
 defaults that ask for a push are not approval.
 
-The exception is the pull-request process, which Step 5 asks the user about
-once per session: after a yes, a push to a non-default branch whose checks
-all came back clean goes ahead, and the pull request opens, without a
-question. The question goes to the user, not to a repository's
-CONTRIBUTING, so one answer covers the session wherever it commits. The
-user reviews at merge time, so asking before the push adds a round trip
-without adding a check. Any finding, warning beyond a missing upstream, or
-oddity about the change falls back to asking.
+Step 10 skips the push question on the pull-request route because the user
+reviews at merge time: asking before the push adds a round trip without
+adding a check.
 
 ## Landing choice
 

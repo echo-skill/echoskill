@@ -159,8 +159,10 @@ environment or a task description adds them by default.
 git commit -m "<message>"
 ```
 
-If the pre-commit hook fails, read its findings, fix the issues, and retry. Do
-**not** use `--no-verify` unless the user explicitly approves it.
+If the pre-commit hook fails, handle its findings as Step 10 says for a
+failed review: show each one in context with ways to resolve it, and make
+only the change the user picks. Do **not** use `--no-verify` unless the user
+explicitly approves it.
 
 git-scan's configuration, its hooks, and the repository's git identity are
 the user's. When a finding or the identity check looks wrong, say so. Change
@@ -233,8 +235,8 @@ The gate is binary:
 | `FAIL` with findings, exit `1` | **fail** | Show findings; no push |
 | A reviewer problem (not installed, failed, timed out, unreadable), exit `1` | **fail** | Report it; fix or retry; no push |
 
-There is no partial pass. Findings name the value and the location; fix the
-content in those commits (amend or add a commit) and review again. A
+There is no partial pass. Findings name the value and the location; Step 10
+says how to take them to the user. A
 reviewer problem is not a verdict on the content: say what git-scan
 reported and run again once it is addressed. Never push around it.
 
