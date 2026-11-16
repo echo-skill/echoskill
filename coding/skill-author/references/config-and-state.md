@@ -49,15 +49,18 @@ For a skill whose store may be cloud (tier 4) or local (tier 2), resolve the
 location once per session, in this order:
 
 1. A location already known this session wins;
-2. Else, if the cloud connector can search by property and update in place,
-   search by the `skill-data` property and — if nothing is found — propose
-   creating the file there;
+2. Else, if a cloud connector is available, find the skill's entry file,
+   `<skill-name>.skill-data.md`, by its name or its marker line (see
+   "Discovery convention" in `references/data-backed-skills.md`) and — if
+   nothing is found — propose creating it there;
 3. Else, if the filesystem is reachable, use the XDG path and propose creating
    it there;
 4. Else stop and say which to set up.
 
-Never silently fall back to a weaker lookup (e.g. by filename) or invent a
-third store. Treat cloud and local as alternatives, not mirrors.
+Never silently fall back to a looser lookup (a guessed title, a folder path)
+or invent a third store. The entry file's name-or-marker lookup, confirmed by
+its front matter, is the designed lookup, not a loose one. Treat cloud and
+local as alternatives, not mirrors.
 
 ---
 
@@ -112,16 +115,15 @@ third store. Treat cloud and local as alternatives, not mirrors.
    and local** — it does **not** sync across agent surfaces (e.g. a CLI agent
    vs a web/mobile app of the same vendor are separate memory stores). It's for
    learned prose context, not structured config. Use sparingly.
-4. **Centralized cloud** (a per-user file or sheet in the user's own cloud
-   account, located via a public file property — `skill-data=<skill-name>`,
-   plus `skill-data-role=<role>` only when the skill owns 2+ files; a set of
-   skills that share one data file tags it with their common name prefix, e.g.
-   `skill-data=bills` for `bills-status` / `bills-pay`). The **only
+4. **Centralized cloud** (per-user files in the user's own cloud account,
+   found through the skill's entry file `<skill-name>.skill-data.md`, which
+   lists them by file ID; see `references/data-backed-skills.md`). The **only
    cross-surface** option; heaviest; adds a connector dependency and a tamper
    surface. Use when cross-device or multi-user truly requires it. A
-   locked/hidden file (e.g. an app-private folder) resists casual tampering
-   better than a user-editable spreadsheet — but app-private properties are
-   invisible to other agents and clients, so don't use them for discovery.
+   locked file resists casual tampering better than a user-editable one, and
+   the entry file can be locked where the tools allow. App-private storage and
+   properties are invisible to other agents and clients, so never use them for
+   discovery.
 
 **Binding-dependency caveat:** cross-surface config portability is moot unless
 the skill's required tools/connectors actually exist on that surface — the
