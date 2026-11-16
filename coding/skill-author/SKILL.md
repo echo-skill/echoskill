@@ -35,7 +35,7 @@ available, Anthropic's `skill-creator` — don't re-derive those basics here.
 | Topic | Reference |
 |-------|-----------|
 | Per-user config & state (default-don't-bind seams, discover-or-seed, prose docs as config, 4 storage tiers) | [references/config-and-state.md](references/config-and-state.md) |
-| Data-backed skills (cloud file formats, `skill-data` property discovery, provisioning, in-place writes, capture obligations, close-out audit, child skeleton) | [references/data-backed-skills.md](references/data-backed-skills.md) |
+| Data-backed skills (cloud file formats, the `<skill>.skill-data.md` entry file and how to find it, provisioning, in-place writes, capture obligations, close-out audit, child skeleton) | [references/data-backed-skills.md](references/data-backed-skills.md) |
 | Installing locally across agent platforms, building `.skill` bundles, headless testing, publishing workflow, duplicate-install & repo-drift reconciliation, and subagent preloading | [references/install-and-publish.md](references/install-and-publish.md) |
 | Claude desktop app specifics (`.skill` install on macOS, updating in place, the two saved copies and sync lag, comparing reformatted frontmatter) | [references/claude-desktop.md](references/claude-desktop.md) |
 
@@ -332,10 +332,11 @@ resolution order, and prose documents as config sources).
    root.
 3. **Agent permanent memory** — local per-surface prose context only (does not
    sync across CLI vs. web/mobile app).
-4. **Centralized cloud** — per-user cloud file/sheet located via public property
-   `skill-data=<skill-name>` (plus `skill-data-role=<role>` when owning 2+
-   files). The only cross-surface option; use when cross-device or multi-user
-   truly requires it.
+4. **Centralized cloud** — per-user cloud files found through one entry file,
+   `<skill-name>.skill-data.md`, located by its name or by the marker line
+   inside it (the older `skill-data=<skill-name>` file property is a fallback
+   where the tools can query properties). The only cross-surface option; use
+   when cross-device or multi-user truly requires it.
 
 ## Data-Backed Skills
 

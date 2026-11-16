@@ -40,7 +40,7 @@ own files of different formats; give each its own `skill-data-role`.
 | Data shape | Format | Examples |
 |---|---|---|
 | **Tabular** — many records with the same fields, growing over time | Spreadsheet (Google Sheets) | a daily log kept for years, an inventory, a register |
-| **Structured but not tabular**, and small enough to read and rewrite whole on every change | JSON file | a config-only file, preferences, a small set of nested settings |
+| **Structured but not tabular**, and small enough to read and rewrite whole on every change | JSON file, or the front matter of the entry file itself | a config-only file, preferences, a small set of nested settings |
 | **Mostly prose** — the value is in the writing itself | Document (Google Docs) | research collected and extended over time, an essay or book draft |
 
 - **Spreadsheets** suit data that grows by adding records. Adding a row doesn't
@@ -50,6 +50,11 @@ own files of different formats; give each its own `skill-data-role`.
   rewriting the whole file on each change is fine at config size. It's the
   wrong choice for anything that grows without limit: a log kept for years
   belongs in a spreadsheet. Updating the same file keeps its revision history.
+  A handful of settings can live in the entry file's front matter instead of
+  a separate file.
+- **Read JSON and YAML as raw content.** Storage services often record them
+  as a binary type, and some connectors' read-as-text tools refuse them or
+  reformat them. Download the file's raw bytes instead.
 - **Documents** suit prose. Don't force records into paragraphs or narrative
   into cells. Edit documents section by section (insert or replace) rather
   than regenerating them, so the user's own edits survive.
@@ -61,27 +66,78 @@ own files of different formats; give each its own `skill-data-role`.
 
 ## Discovery convention
 
-Locate data files by a **public custom file property**, never by hardcoded ID,
-title, or path. The user may rename or move files freely.
+Every data-backed skill owns one **entry file**: `<skill-name>.skill-data.md`,
+named with the skill's exact `name`. It is the one file a skill has to find
+without already knowing an ID; everything else is opened by the IDs it lists.
+File IDs survive renames and moves, so the user can reorganize freely.
 
-| Key | Value | Required |
-|---|---|---|
-| `skill-data` | the skill's `name` | always, on every file the skill owns |
-| `skill-data-role` | the file's role (`data`, `config`, `reference`, `log`, …) | only when the skill owns 2+ files |
+Why a file rather than a file property: stock cloud connectors (the ones an
+agent platform ships, as opposed to a custom one) commonly search files by
+title and full text but not by custom properties, while they can see the
+whole drive. A name plus a marker line works through all of them.
 
-- One query finds everything a skill owns:
-  `properties has { key='skill-data' and value='<name>' } and trashed = false`
-- Add a role condition to find one exact file. Roles live in a property, not
-  the filename, because filenames are user-editable.
-- Use **public** properties (visible to any client), not app-private ones. The
-  skill runs through different agents and OAuth clients; private properties are
-  invisible to all but the writer.
-- A file may belong to only one skill (one key, one value). If two skills need
-  the same data, one owns it; the other reaches it through the owner.
-- Keep keys and values short — most providers cap property size (Google Drive:
-  124 bytes per key+value).
-- **Migrating from a legacy key:** properties merge, so tag files with both the
-  old and new keys, update the skill, then remove the old key.
+### What it holds
+
+Markdown with YAML front matter, the same shape as `SKILL.md`:
+
+```markdown
+---
+kind: SkillData
+version: 1
+skill-data: <skill-name>
+files:
+  <role>:
+    id: <file id>
+    name: <title when created>      # for people; never used to find the file
+settings:                           # optional: a few small per-user settings
+  <key>: <value>
+---
+
+# <skill-name> skill data
+
+This file tells the <skill-name> skill where its data is. The skill finds it
+by its name or by the `skill-data: <skill-name>` line above, then opens the
+files listed by ID. Please don't rename, trash or edit this file by hand.
+```
+
+- `kind` declares the format; `version` lets it change later.
+- The `skill-data:` line is the **marker**: it finds the file even after a
+  rename.
+- Roles (`data`, `config`, `log`, `attachments`, …) are the keys under
+  `files:`, so filenames stay free for people.
+- Secrets never go here, or anywhere in skill data.
+
+### Finding it
+
+1. Search the user's storage for the exact title
+   `<skill-name>.skill-data.md`, **or** for files whose full text contains
+   `skill-data: <skill-name>`.
+2. **Confirm every hit by reading it.** Full-text search matches loosely and
+   returns unrelated files; keep only a file whose front matter says
+   `kind: SkillData` and `skill-data: <skill-name>`.
+3. One confirmed file: use it for the session. More than one: ask which is
+   authoritative; don't guess. None: see "Provisioning".
+4. **Read it as raw content** (download its bytes), not through a
+   read-as-text tool: a text rendering may escape the Markdown, drop the
+   indentation the front matter depends on, or return an older revision.
+
+**Fallback for older stores:** if nothing is found and the tools can query
+custom file properties, search by the public property
+`skill-data=<skill-name>` (plus `skill-data-role=<role>`), as earlier
+versions of this convention did. When that finds files, offer to create the
+entry file listing them.
+
+### Optional lock
+
+Where the tools can set the storage service's own file lock (Google Drive:
+the file's read-only content restriction), lock the entry file: it then
+can't be renamed or edited by accident. To change it, unlock, edit, lock
+again. A skill never fails, stops or asks because a lock can't be set.
+
+### Files several skills share
+
+The entry files of several skills may list the same data file. One skill
+owns it and is the only one that writes it; the others only read it.
 
 ### Where files live
 
@@ -94,15 +150,16 @@ storage UI shows properties, so a loose file looks like any other.
 | the parent of all skill data | `skill-data-role` | `root` |
 | one skill's folder, inside the parent | `skill-data-folder` | the skill's `name` |
 
-Placement is best effort. The property on the file is what finds it later, so
-a skill never fails, stops, or asks just because it can't reach, create, or
-tag a folder. Folders never carry `skill-data`, so a file query never returns
-a folder. `root` is reserved as a role.
+Placement is best effort. The entry file is what finds the data later, so a
+skill never fails, stops, or asks just because it can't reach, create, or tag
+a folder. Folders never carry `skill-data`, so a property query never returns
+a folder. `root` is reserved as a role. The entry file goes in the skill's
+folder.
 
-This is written against Google Drive custom file properties. For other
-providers, use the equivalent queryable metadata (e.g. OneDrive/SharePoint
-custom columns, Dropbox file properties/templates); if none exists, discover by
-a pointer file at a well-known path and say so.
+The convention needs only title and full-text search plus raw download, which
+most storage connectors offer (Google Drive, OneDrive/SharePoint, Dropbox).
+Where a provider has queryable custom metadata, it is an extra fallback, not
+the primary lookup.
 
 ### Declare the binding in the skill
 
@@ -112,7 +169,7 @@ data lives without parsing prose:
 ```yaml
 metadata:
   data-store: google-drive
-  data-selector: "skill-data=<name>"
+  data-entry: "<name>.skill-data.md"
 ```
 
 ### Tabs and sections inside a file
@@ -133,22 +190,31 @@ section, ask rather than create a new one.
 
 ## Provisioning — find, then ask, then create
 
-1. Search by the property. Exactly one match → use it for the session.
-2. Multiple matches → ask which is authoritative. Don't guess.
+1. Find the entry file (see "Finding it"). Exactly one confirmed match → use
+   it for the session.
+2. Multiple confirmed matches → ask which is authoritative. Don't guess.
 3. No match in **any** connected account or drive → **stop and ask**: point me
-   at an existing file (then tag it), or
-   create a fresh one. **Never scaffold over data you merely failed to find** —
-   an empty store that looks like the real one is worse than stopping.
-4. When creating: build the file in the format the skill specifies, write its
-   initial structure exactly as the skill defines it (column headers, JSON
-   skeleton, or document headings), put it in the skill's data folder when
-   the tools allow (see "Where files live"), tag it, and tell the user where
-   it landed.
+   at existing files (then create the entry file listing them), or create
+   fresh ones. **Never scaffold over data you merely failed to find** — an
+   empty store that looks like the real one is worse than stopping.
+4. When creating: build each data file in the format the skill specifies,
+   write its initial structure exactly as the skill defines it (column
+   headers, JSON skeleton, or document headings), then create the entry file
+   listing them by ID. Create Markdown and JSON as plain files, not converted
+   to the provider's document format. Put them in the skill's data folder
+   when the tools allow (see "Where files live"), lock the entry file where
+   possible, and tell the user where it landed.
 
 ## Writing
 
 - **Update in place.** Revision history on the same file ID is the version
   store. Never delete-and-recreate a file to "update" it.
+- **Check that the tools can replace a file's content in place** before
+  choosing where changing data goes. Some stock connectors can create files
+  and change their name, folder or lock, but not their content. Keep the entry
+  file mostly fixed (IDs rarely change), and put data that changes often in a
+  spreadsheet or document, which such connectors usually can edit. If a write
+  is impossible with the tools at hand, say so rather than recreate the file.
 - Confirm before destructive changes (removing rows, tabs, or files).
 - If the tooling forces a history-destroying write, say so before writing.
 
@@ -157,9 +223,9 @@ section, ask rather than create a new one.
 Keep attachments in the user's cloud storage and link to them from the record,
 so they survive the conversation they were shared in.
 
-- **Storage:** one folder per skill, tagged `skill-data=<name>` and
-  `skill-data-role=attachments`; tag the main data file `skill-data-role=data`.
-  A record with 2+ attachments gets its own subfolder, and the record links the
+- **Storage:** one attachments folder per skill, listed in the entry file
+  under `files:` → `attachments` (by folder ID), next to the main data file
+  (`data`). A record with 2+ attachments gets its own subfolder, and the record links the
   subfolder. When a second attachment arrives, move the first into it. Links use
   file IDs, so renames and moves don't break them.
 - **Where the link goes:**
@@ -233,7 +299,7 @@ description: >-
   <What the data is and when to use it — log, update, review, revise …>
 metadata:
   data-store: google-drive
-  data-selector: "skill-data=<name>"
+  data-entry: "<name>.skill-data.md"
 ---
 
 # <Title>
@@ -243,8 +309,10 @@ Nothing of value from any session may be lost. The data store holds all
 records; this skill holds all process. Chat and agent memory are not storage.
 
 ## Locating the data
-<property query; fallback: ask, then tag; never scaffold over unfound data;
-new files go in the skill's data folder when the tools allow>
+<find `<name>.skill-data.md` by name or marker, confirm by front matter, read
+it raw, open files by the IDs it lists; fallback: the `skill-data` property;
+then ask; never scaffold over unfound data; new files go in the skill's data
+folder when the tools allow>
 
 ## Structure
 <each file: format and why, role, sections (tabs, headings, or keys),
@@ -264,15 +332,23 @@ today's tools can't do>
 
 ## Design decisions
 
+- An entry file found by name or marker, not a file property: stock
+  connectors search by title and full text but not custom properties, so a
+  property-only convention locked skills to custom connectors. The name makes
+  it self-describing; the marker survives a rename; the front-matter check
+  rules out loose full-text matches.
+- Markdown with YAML front matter, because `SKILL.md` already uses that
+  standard, people can read it, and connectors read Markdown as text. `kind`
+  and `version` declare the format; no new file extension, which providers
+  would store as an unreadable binary type.
 - The key is `skill-data`, a neutral name, not a vendor- or project-branded
-  one: don't borrow a namespace you don't own. Propose it upstream if it proves
-  out.
-- Roles live in a property, not the filename, because filenames are
+  one: don't borrow a namespace you don't own.
+- Roles live in the entry file, not the filename, because filenames are
   user-editable.
-- Public properties, not app-private, so every agent and client can discover
-  the files.
+- Where properties are still used (the fallback), they are public, not
+  app-private, so every agent and client can see them.
 - No pattern-version stamps in child skills: children are identifiable by their
-  `data-store` / `data-selector` metadata, which is enough to find and update
+  `data-store` / `data-entry` metadata, which is enough to find and update
   them.
 - How a child's own source gets updated and versioned stays here, not in each
   child.
